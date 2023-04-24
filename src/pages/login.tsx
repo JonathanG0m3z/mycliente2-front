@@ -1,4 +1,5 @@
 import Head from 'next/head';
+import Image from 'next/image';
 import type { FC } from 'react';
 
 const Login: FC = () => {
@@ -28,7 +29,7 @@ const Login: FC = () => {
             <div className="flex-1">
               <div className="text-center">
                 <div className="flex justify-center mx-auto">
-                  <img className="w-auto h-7 sm:h-8" src="https://merakiui.com/images/logo.svg" alt="" />
+                  <Image src="https://merakiui.com/images/logo.svg" alt="" width={1000} height={500} className="w-auto h-7 sm:h-8" />
                 </div>
                 <p className="mt-3 text-gray-500 dark:text-gray-300">Ingresa para acceder a tu cuenta</p>
               </div>

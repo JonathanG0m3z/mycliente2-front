@@ -1,11 +1,10 @@
 import Head from 'next/head';
 import Image from 'next/image';
 import type { FC } from 'react';
-import { GoogleOAuthProvider } from '@react-oauth/google';
 
 const Login: FC = () => {
   return (
-    <GoogleOAuthProvider clientId="<your_client_id>">
+    <>
       <Head>
         <title>Ingresar a MyCliente</title>
       </Head>
@@ -105,7 +104,7 @@ const Login: FC = () => {
           </div>
         </div>
       </div>
-    </GoogleOAuthProvider>
+    </>
   );
 };
 

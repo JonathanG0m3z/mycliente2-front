@@ -1,10 +1,11 @@
 import Head from 'next/head';
 import Image from 'next/image';
 import type { FC } from 'react';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 const Login: FC = () => {
   return (
-    <>
+    <GoogleOAuthProvider clientId="<your_client_id>">
       <Head>
         <title>Ingresar a MyCliente</title>
       </Head>
@@ -19,9 +20,7 @@ const Login: FC = () => {
             <div className="flex items-center h-full px-20 bg-gray-900 bg-opacity-40">
               <div>
                 <h2 className="text-2xl font-bold text-white sm:text-3xl">MyCliente2</h2>
-                <p className="max-w-xl mt-3 text-gray-300">
-                  La mejor aplicación de registro de ventas para cuentas de streaming y entretenimiento. Estás a un paso de cambiar tu forma de trabajar totalmente.
-                </p>
+                <p className="max-w-xl mt-3 text-gray-300">La mejor aplicación de registro de ventas para cuentas de streaming y entretenimiento. Estás a un paso de cambiar tu forma de trabajar.</p>
               </div>
             </div>
           </div>
@@ -106,7 +105,7 @@ const Login: FC = () => {
           </div>
         </div>
       </div>
-    </>
+    </GoogleOAuthProvider>
   );
 };
 

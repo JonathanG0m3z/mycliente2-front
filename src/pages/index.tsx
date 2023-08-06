@@ -1,5 +1,5 @@
+import { Button } from '@mui/material';
 import Image from 'next/image';
-import Link from 'next/link';
 import type { FC } from 'react';
 
 const LandingPage: FC = () => {
@@ -139,11 +139,9 @@ const LandingPage: FC = () => {
                   fin de funcionalidades extra.
                 </p>
                 <p className="text-body-color mb-12 text-base">Suficiente motivo para un comprador de no cambiar de distribuidor.</p>
-                <Link href="/login">
-                  <button className="px-6 py-2 font-medium tracking-wide text-white capitalize transition-colors duration-300 transform bg-indigo-600 rounded-lg hover:bg-indigo-500 focus:outline-none focus:ring focus:ring-indigo-300 focus:ring-opacity-80">
-                    Ingresar
-                  </button>
-                </Link>
+                <Button variant="contained" href="/login">
+                  Ingresar
+                </Button>
               </div>
             </div>
           </div>

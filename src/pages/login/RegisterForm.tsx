@@ -1,6 +1,7 @@
-import { Avatar, Box, Button, Checkbox, Container, CssBaseline, FormControlLabel, Grid, InputLabel, Link, MenuItem, Select, TextField, Typography } from '@mui/material';
+import { Avatar, Box, Button, Container, CssBaseline, Grid, InputLabel, Link, MenuItem, Select, TextField, Typography } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
 
 const dialCodes = [
   { code: '+57', country: 'Colombia' },
@@ -26,14 +27,47 @@ const dialCodes = [
   { code: '+58', country: 'Venezuela' },
 ];
 
-const RegisterForm = () => {
-  const handleSubmit = (values: any) => {
-    console.log(values);
-  };
-  const [selectedCode, setSelectedCode] = useState<string>('');
+const NEXT_PUBLIC_BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+interface RegisterFormProps {
+  handleCloseForm: () => void;
+}
 
-  const handleChange = (event: React.ChangeEvent<{ value: unknown }>) => {
+const RegisterForm = ({ handleCloseForm }: RegisterFormProps) => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+  } = useForm();
+  const [selectedCode, setSelectedCode] = useState<string>(dialCodes[0].code);
+  const password = React.useRef({});
+  password.current = watch('password', '');
+
+  const handleChangeDial = (event: React.ChangeEvent<{ value: unknown }>) => {
     setSelectedCode(event.target.value as string);
+  };
+  const onSubmit = async (data: any) => {
+    try {
+      const response = await fetch(`${NEXT_PUBLIC_BACKEND_URL}users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...data,
+          name: `${data.firstName} ${data.lastName}`,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      // Si la solicitud fue exitosa, puedes realizar acciones adicionales o mostrar un mensaje de éxito.
+      console.log('Data posted successfully!');
+    } catch (error) {
+      console.error('Error posting data:', error);
+    }
   };
   return (
     <Container component="main" maxWidth="xs">
@@ -52,23 +86,59 @@ const RegisterForm = () => {
         <Typography component="h1" variant="h5">
           Crear cuenta
         </Typography>
-        <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 3 }}>
+        <Box component="form" sx={{ mt: 3 }} onSubmit={handleSubmit(onSubmit)}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
-              <TextField autoComplete="given-name" name="firstName" required fullWidth id="firstName" label="Nombres" />
+              <TextField
+                helperText={errors.firstName?.message || ''}
+                error={!!errors.firstName}
+                {...register('firstName', { required: 'Este campo es requerido', pattern: { value: /^[A-ZÁÉÍÓÚÜÑ]/, message: 'Los nombres deben iniciar en mayúsculas' } })}
+                autoComplete="name"
+                name="firstName"
+                fullWidth
+                id="firstName"
+                label="Nombres"
+              />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField required fullWidth id="lastName" label="Apellidos" name="lastName" autoComplete="family-name" />
+              <TextField
+                helperText={errors.lastName?.message || ''}
+                error={!!errors.lastName}
+                {...register('lastName', { required: 'Este campo es requerido', pattern: { value: /^[A-ZÁÉÍÓÚÜÑ]/, message: 'Los apellidos deben iniciar en mayúsculas' } })}
+                fullWidth
+                id="lastName"
+                label="Apellidos"
+                name="lastName"
+                autoComplete="lastname"
+              />
             </Grid>
             <Grid item xs={12} sm={12}>
-              <TextField required fullWidth id="username" label="Usuario" name="username" autoComplete="username" />
+              <TextField
+                helperText={errors.user?.message || ''}
+                error={!!errors.user}
+                {...register('user', { required: 'Este campo es requerido', pattern: { value: /^[^\s]+$/, message: 'No se permiten espacios en el nombre de usuario' } })}
+                fullWidth
+                id="user"
+                label="Usuario"
+                name="user"
+                autoComplete="user"
+              />
             </Grid>
             <Grid item xs={12}>
-              <TextField required fullWidth id="email" label="Correo electrónico" name="email" autoComplete="email" />
+              <TextField
+                helperText={errors.email?.message || ''}
+                error={!!errors.email}
+                {...register('email', { required: 'Este campo es requerido', pattern: { value: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/, message: 'Dirección email invalida' } })}
+                fullWidth
+                id="email"
+                label="Correo electrónico"
+                name="email"
+                autoComplete="email"
+              />
             </Grid>
             <Grid item xs={12}>
               <InputLabel id="dial-code-label">País</InputLabel>
-              <Select labelId="dial-code-label" id="dial-code" value={selectedCode} label="País" onChange={handleChange}>
+              <Select fullWidth labelId="dial-code-label" id="dial-code" value={selectedCode} label="País" onChange={handleChangeDial}>
                 {dialCodes.map((item) => (
                   <MenuItem key={item.code} value={item.code}>
                     {item.country} - {item.code}
@@ -77,13 +147,48 @@ const RegisterForm = () => {
               </Select>
             </Grid>
             <Grid item xs={12}>
-              <TextField required fullWidth id="phone" label="Numero telefónico" type="number" name="phone" autoComplete="phone" />
+              <TextField
+                helperText={errors.phone?.message || ''}
+                error={!!errors.phone}
+                {...register('phone', { required: 'Este campo es requerido', pattern: { value: /^[0-9]+$/, message: 'El número de teléfono debe contener solo dígitos' } })}
+                fullWidth
+                id="phone"
+                label="Numero telefónico"
+                type="number"
+                name="phone"
+                autoComplete="phone"
+              />
             </Grid>
             <Grid item xs={12}>
-              <TextField required fullWidth name="password" label="Contraseña" type="password" id="password" autoComplete="new-password" />
+              <TextField
+                helperText={errors.password?.message || ''}
+                error={!!errors.password}
+                {...register('password', {
+                  required: 'Este campo es requerido',
+                  pattern: { value: /^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])[A-Za-z0-9!@#$%^&*]+$/, message: 'La contraseña debe contener al menos una mayúscula, un número y un carácter especial' },
+                  minLength: { value: 6, message: 'La contraseña debe ser de almenos 6 caracteres' },
+                })}
+                fullWidth
+                name="password"
+                label="Contraseña"
+                type="password"
+                id="password"
+              />
             </Grid>
             <Grid item xs={12}>
-              <TextField required fullWidth name="passwordConfirm" label="Confirmar contraseña" type="password" id="passwordConfirm" autoComplete="new-password" />
+              <TextField
+                helperText={errors.passwordConfirm?.message || ''}
+                error={!!errors.passwordConfirm}
+                {...register('passwordConfirm', {
+                  required: 'Este campo es requerido',
+                  validate: (value) => value === password.current || 'Las contraseñas no coinciden',
+                })}
+                fullWidth
+                name="passwordConfirm"
+                label="Confirmar contraseña"
+                type="password"
+                id="passwordConfirm"
+              />
             </Grid>
             {/* <Grid item xs={12}>
               <FormControlLabel control={<Checkbox value="allowExtraEmails" color="primary" />} label="I want to receive inspiration, marketing promotions and updates via email." />
@@ -94,8 +199,8 @@ const RegisterForm = () => {
           </Button>
           <Grid container justifyContent="flex-end">
             <Grid item>
-              <Link href="#" variant="body2">
-                Already have an account? Sign in
+              <Link onClick={handleCloseForm} href="#" variant="body2">
+                ¿Ya tienes una cuenta? Ingresa
               </Link>
             </Grid>
           </Grid>

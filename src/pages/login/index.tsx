@@ -9,7 +9,8 @@ const style = {
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
-  width: 400,
+  maxWidth: '600px',
+  width: '100%',
   bgcolor: 'background.paper',
   border: '2px solid #000',
   boxShadow: 24,
@@ -127,7 +128,7 @@ const Login: FC = () => {
       </div>
       <Modal open={registerForm} onClose={handleClickCloseRegister} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
         <Box sx={style}>
-          <RegisterForm />
+          <RegisterForm handleCloseForm={handleClickCloseRegister} />
         </Box>
       </Modal>
     </>

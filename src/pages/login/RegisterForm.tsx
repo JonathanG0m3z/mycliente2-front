@@ -140,18 +140,6 @@ const RegisterForm = ({ handleCloseForm }: RegisterFormProps) => {
                 autoComplete="lastname"
               />
             </Grid>
-            <Grid item xs={12} sm={12}>
-              <TextField
-                helperText={errors.user?.message || ''}
-                error={!!errors.user}
-                {...register('user', { required: 'Este campo es requerido', pattern: { value: /^[^\s]+$/, message: 'No se permiten espacios en el nombre de usuario' } })}
-                fullWidth
-                id="user"
-                label="Usuario"
-                name="user"
-                autoComplete="user"
-              />
-            </Grid>
             <Grid item xs={12}>
               <TextField
                 helperText={errors.email?.message || ''}

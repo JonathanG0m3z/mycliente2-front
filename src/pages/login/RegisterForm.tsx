@@ -2,6 +2,7 @@ import { Avatar, Box, Button, Container, CssBaseline, Grid, InputLabel, Link, Me
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import Swal from 'sweetalert2';
 
 const dialCodes = [
   { code: '+57', country: 'Colombia' },
@@ -46,9 +47,9 @@ const RegisterForm = ({ handleCloseForm }: RegisterFormProps) => {
   const handleChangeDial = (event: React.ChangeEvent<{ value: unknown }>) => {
     setSelectedCode(event.target.value as string);
   };
-  const onSubmit = async (data: any) => {
+  const onSubmit = (data: any) => {
     try {
-      const response = await fetch(`${NEXT_PUBLIC_BACKEND_URL}users`, {
+      fetch(`${NEXT_PUBLIC_BACKEND_URL}users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -56,17 +57,44 @@ const RegisterForm = ({ handleCloseForm }: RegisterFormProps) => {
         body: JSON.stringify({
           ...data,
           name: `${data.firstName} ${data.lastName}`,
+          phone: `${selectedCode.replace(/\+/g, '')}${data.phone}`,
         }),
+      }).then((response) => {
+        if (response.ok) {
+          response.json().then((res) => {
+            handleCloseForm();
+            Swal.fire({
+              title: `Usuario ${res.user} creado correctamente`,
+              icon: 'success',
+              customClass: {
+                container: 'zindex-sweetalert',
+              },
+            });
+          });
+        } else {
+          response.json().then((res) => {
+            Swal.fire({
+              title: 'Error al crear el usuario',
+              icon: 'error',
+              confirmButtonText: 'Aceptar',
+              text: res.message,
+              customClass: {
+                container: 'zindex-sweetalert',
+              },
+            });
+          });
+        }
       });
-
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-
-      // Si la solicitud fue exitosa, puedes realizar acciones adicionales o mostrar un mensaje de éxito.
-      console.log('Data posted successfully!');
     } catch (error) {
-      console.error('Error posting data:', error);
+      Swal.fire({
+        title: 'Algo salió mal',
+        icon: 'error',
+        confirmButtonText: 'Aceptar',
+        text: error.message,
+        customClass: {
+          container: 'zindex-sweetalert',
+        },
+      });
     }
   };
   return (

@@ -1,7 +1,7 @@
 import { Box, Modal } from '@mui/material';
 import Head from 'next/head';
 import Image from 'next/image';
-import { useState, type FC } from 'react';
+import { useState, type FC, ChangeEvent, MouseEvent } from 'react';
 import RegisterForm from './RegisterForm';
 
 const style = {
@@ -19,8 +19,23 @@ const style = {
 
 const Login: FC = () => {
   const [registerForm, setRegisterForm] = useState(false);
-  const handleClickRegister = () => setRegisterForm(true);
-  const handleClickCloseRegister = () => setRegisterForm(false);
+  const onClickRegister = () => setRegisterForm(true);
+  const onClickCloseRegister = () => setRegisterForm(false);
+  const [loginFormValues, setLoginFormValues] = useState({
+    email: '',
+    password: '',
+  });
+  const onChangeLoginValues = (e: ChangeEvent<HTMLInputElement>) => {
+    setLoginFormValues((prevState) => {
+      return {
+        ...prevState,
+        [e.target.id]: e.target.value,
+      };
+    });
+  };
+  const onValidateData = (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+  };
   return (
     <>
       <Head>
@@ -56,9 +71,12 @@ const Login: FC = () => {
                       Correo electrónico
                     </label>
                     <input
+                      value={loginFormValues.email}
+                      onChange={onChangeLoginValues}
                       type="email"
                       name="email"
                       id="email"
+                      required
                       placeholder="example@example.com"
                       className="block w-full px-4 py-2 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-indigo-400 dark:focus:border-indigo-400 focus:ring-indigo-400 focus:outline-none focus:ring focus:ring-opacity-40"
                     />
@@ -71,15 +89,21 @@ const Login: FC = () => {
                       <button className="text-sm text-gray-400 focus:text-blue-500 hover:text-blue-500 hover:underline">¿Olvidaste tu contraseña?</button>
                     </div>
                     <input
+                      value={loginFormValues.password}
+                      onChange={onChangeLoginValues}
                       type="password"
                       name="password"
                       id="password"
+                      required
                       placeholder="Tu contraseña"
                       className="block w-full px-4 py-2 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-indigo-400 dark:focus:border-indigo-400 focus:ring-indigo-400 focus:outline-none focus:ring focus:ring-opacity-40"
                     />
                   </div>
                   <div className="mt-6">
-                    <button className="w-full px-4 py-2 tracking-wide text-white transition-colors duration-300 transform bg-indigo-500 rounded-lg hover:bg-indigo-400 focus:outline-none focus:bg-indigo-400 focus:ring focus:ring-indigo-300 focus:ring-opacity-50">
+                    <button
+                      onClick={onValidateData}
+                      className="w-full px-4 py-2 tracking-wide text-white transition-colors duration-300 transform bg-indigo-500 rounded-lg hover:bg-indigo-400 focus:outline-none focus:bg-indigo-400 focus:ring focus:ring-indigo-300 focus:ring-opacity-50"
+                    >
                       Ingresar
                     </button>
                   </div>
@@ -116,7 +140,7 @@ const Login: FC = () => {
                 </form>
                 <p className="mt-6 text-sm text-center text-gray-400">
                   ¿Aún no tienes una cuenta?{' '}
-                  <button onClick={handleClickRegister} className="text-blue-500 focus:outline-none focus:underline hover:underline">
+                  <button onClick={onClickRegister} className="text-blue-500 focus:outline-none focus:underline hover:underline">
                     Registrate con tu correo electrónico
                   </button>
                   .
@@ -126,9 +150,9 @@ const Login: FC = () => {
           </div>
         </div>
       </div>
-      <Modal open={registerForm} onClose={handleClickCloseRegister} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
+      <Modal open={registerForm} onClose={onClickCloseRegister} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
         <Box sx={style}>
-          <RegisterForm handleCloseForm={handleClickCloseRegister} />
+          <RegisterForm handleCloseForm={onClickCloseRegister} />
         </Box>
       </Modal>
     </>

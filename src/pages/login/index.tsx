@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Image from 'next/image';
 import { useState, type FC, ChangeEvent, MouseEvent } from 'react';
 import RegisterForm from './RegisterForm';
+import Swal from 'sweetalert2';
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -16,6 +17,8 @@ const style = {
   boxShadow: 24,
   p: 4,
 };
+
+const NEXT_PUBLIC_BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 const Login: FC = () => {
   const [registerForm, setRegisterForm] = useState(false);
@@ -35,6 +38,46 @@ const Login: FC = () => {
   };
   const onValidateData = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
+    fetch(`${NEXT_PUBLIC_BACKEND_URL}users/validate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(loginFormValues),
+    })
+      .then((response) => {
+        if (response.ok) {
+          response.json().then((res) => {
+            console.log({
+              status: 'Valido',
+              res,
+            });
+          });
+        } else {
+          response.json().then((res) => {
+            Swal.fire({
+              title: 'Credenciales incorrectas',
+              icon: 'error',
+              confirmButtonText: 'Aceptar',
+              text: res.message,
+              customClass: {
+                container: 'zindex-sweetalert',
+              },
+            });
+          });
+        }
+      })
+      .catch((error) => {
+        Swal.fire({
+          title: 'Algo salió mal',
+          icon: 'error',
+          confirmButtonText: 'Aceptar',
+          text: error.message,
+          customClass: {
+            container: 'zindex-sweetalert',
+          },
+        });
+      });
   };
   return (
     <>

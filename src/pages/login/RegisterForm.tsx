@@ -1,4 +1,4 @@
-import { Avatar, Box, Button, Container, CssBaseline, Grid, InputLabel, Link, MenuItem, Select, TextField, Typography } from '@mui/material';
+import { Avatar, Box, Button, Container, CssBaseline, Grid, InputLabel, Link, MenuItem, Select, SelectChangeEvent, TextField, Typography } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -44,22 +44,22 @@ const RegisterForm = ({ handleCloseForm }: RegisterFormProps) => {
   const password = React.useRef({});
   password.current = watch('password', '');
 
-  const handleChangeDial = (event: React.ChangeEvent<{ value: unknown }>) => {
+  const handleChangeDial = (event: SelectChangeEvent<string>) => {
     setSelectedCode(event.target.value as string);
   };
   const onSubmit = (data: any) => {
-    try {
-      fetch(`${NEXT_PUBLIC_BACKEND_URL}users`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...data,
-          name: `${data.firstName} ${data.lastName}`,
-          phone: `${selectedCode.replace(/\+/g, '')}${data.phone}`,
-        }),
-      }).then((response) => {
+    fetch(`${NEXT_PUBLIC_BACKEND_URL}users`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...data,
+        name: `${data.firstName} ${data.lastName}`,
+        phone: `${selectedCode.replace(/\+/g, '')}${data.phone}`,
+      }),
+    })
+      .then((response) => {
         if (response.ok) {
           response.json().then((res) => {
             handleCloseForm();
@@ -84,18 +84,18 @@ const RegisterForm = ({ handleCloseForm }: RegisterFormProps) => {
             });
           });
         }
+      })
+      .catch((error) => {
+        Swal.fire({
+          title: 'Algo salió mal',
+          icon: 'error',
+          confirmButtonText: 'Aceptar',
+          text: error.message,
+          customClass: {
+            container: 'zindex-sweetalert',
+          },
+        });
       });
-    } catch (error) {
-      Swal.fire({
-        title: 'Algo salió mal',
-        icon: 'error',
-        confirmButtonText: 'Aceptar',
-        text: error.message,
-        customClass: {
-          container: 'zindex-sweetalert',
-        },
-      });
-    }
   };
   return (
     <Container component="main" maxWidth="xs">
@@ -118,7 +118,7 @@ const RegisterForm = ({ handleCloseForm }: RegisterFormProps) => {
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
               <TextField
-                helperText={errors.firstName?.message || ''}
+                helperText={`${errors.firstName?.message || ''}`}
                 error={!!errors.firstName}
                 {...register('firstName', { required: 'Este campo es requerido', pattern: { value: /^[A-ZÁÉÍÓÚÜÑ]/, message: 'Los nombres deben iniciar en mayúsculas' } })}
                 autoComplete="name"
@@ -130,7 +130,7 @@ const RegisterForm = ({ handleCloseForm }: RegisterFormProps) => {
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
-                helperText={errors.lastName?.message || ''}
+                helperText={`${errors.lastName?.message || ''}`}
                 error={!!errors.lastName}
                 {...register('lastName', { required: 'Este campo es requerido', pattern: { value: /^[A-ZÁÉÍÓÚÜÑ]/, message: 'Los apellidos deben iniciar en mayúsculas' } })}
                 fullWidth
@@ -142,7 +142,7 @@ const RegisterForm = ({ handleCloseForm }: RegisterFormProps) => {
             </Grid>
             <Grid item xs={12}>
               <TextField
-                helperText={errors.email?.message || ''}
+                helperText={`${errors.email?.message || ''}`}
                 error={!!errors.email}
                 {...register('email', { required: 'Este campo es requerido', pattern: { value: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/, message: 'Dirección email invalida' } })}
                 fullWidth
@@ -164,7 +164,7 @@ const RegisterForm = ({ handleCloseForm }: RegisterFormProps) => {
             </Grid>
             <Grid item xs={12}>
               <TextField
-                helperText={errors.phone?.message || ''}
+                helperText={`${errors.phone?.message || ''}`}
                 error={!!errors.phone}
                 {...register('phone', { required: 'Este campo es requerido', pattern: { value: /^[0-9]+$/, message: 'El número de teléfono debe contener solo dígitos' } })}
                 fullWidth
@@ -177,7 +177,7 @@ const RegisterForm = ({ handleCloseForm }: RegisterFormProps) => {
             </Grid>
             <Grid item xs={12}>
               <TextField
-                helperText={errors.password?.message || ''}
+                helperText={`${errors.password?.message || ''}`}
                 error={!!errors.password}
                 {...register('password', {
                   required: 'Este campo es requerido',
@@ -193,7 +193,7 @@ const RegisterForm = ({ handleCloseForm }: RegisterFormProps) => {
             </Grid>
             <Grid item xs={12}>
               <TextField
-                helperText={errors.passwordConfirm?.message || ''}
+                helperText={`${errors.passwordConfirm?.message || ''}`}
                 error={!!errors.passwordConfirm}
                 {...register('passwordConfirm', {
                   required: 'Este campo es requerido',

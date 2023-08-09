@@ -1,12 +1,13 @@
 import { Box, Modal } from '@mui/material';
 import Head from 'next/head';
 import Image from 'next/image';
-import { useState, type FC, ChangeEvent, MouseEvent, useEffect } from 'react';
+import { useState, type FC, ChangeEvent, useEffect, FormEvent } from 'react';
 import RegisterForm from './RegisterForm';
 import Swal from 'sweetalert2';
 import { useRouter } from 'next/router';
 import { TokenType } from '@/utils/authMiddleware';
 import jwt_decode from 'jwt-decode';
+import CryptoJS from 'crypto-js';
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -22,6 +23,7 @@ const style = {
 };
 
 const NEXT_PUBLIC_BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+const NEXT_PUBLIC_CRYPTOJS_SECRET_KEY = process.env.NEXT_PUBLIC_CRYPTOJS_SECRET_KEY;
 
 const Login: FC = () => {
   const router = useRouter();
@@ -40,46 +42,61 @@ const Login: FC = () => {
       };
     });
   };
-  const onValidateData = (e: MouseEvent<HTMLButtonElement>) => {
+  const onValidateData = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    fetch(`${NEXT_PUBLIC_BACKEND_URL}users/validate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(loginFormValues),
-    })
-      .then((response) => {
-        if (response.ok) {
-          response.json().then((res) => {
-            localStorage.setItem('token', res.token);
-            router.push('/home');
-          });
-        } else {
-          response.json().then((res) => {
-            Swal.fire({
-              title: 'Credenciales incorrectas',
-              icon: 'error',
-              confirmButtonText: 'Aceptar',
-              text: res.message,
-              customClass: {
-                container: 'zindex-sweetalert',
-              },
-            });
-          });
-        }
+    if (NEXT_PUBLIC_CRYPTOJS_SECRET_KEY !== undefined) {
+      fetch(`${NEXT_PUBLIC_BACKEND_URL}users/validate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...loginFormValues,
+          password: CryptoJS.AES.encrypt(loginFormValues.password, NEXT_PUBLIC_CRYPTOJS_SECRET_KEY).toString(),
+        }),
       })
-      .catch((error) => {
-        Swal.fire({
-          title: 'Algo salió mal',
-          icon: 'error',
-          confirmButtonText: 'Aceptar',
-          text: error.message,
-          customClass: {
-            container: 'zindex-sweetalert',
-          },
+        .then((response) => {
+          if (response.ok) {
+            response.json().then((res) => {
+              localStorage.setItem('token', res.token);
+              router.push('/home');
+            });
+          } else {
+            response.json().then((res) => {
+              Swal.fire({
+                title: 'Credenciales incorrectas',
+                icon: 'error',
+                confirmButtonText: 'Aceptar',
+                text: res.message,
+                customClass: {
+                  container: 'zindex-sweetalert',
+                },
+              });
+            });
+          }
+        })
+        .catch((error) => {
+          Swal.fire({
+            title: 'Algo salió mal',
+            icon: 'error',
+            confirmButtonText: 'Aceptar',
+            text: error.message,
+            customClass: {
+              container: 'zindex-sweetalert',
+            },
+          });
         });
+    } else {
+      Swal.fire({
+        title: 'ERROR FATAL',
+        icon: 'error',
+        confirmButtonText: 'Aceptar',
+        text: 'Falta SECRET_KEY',
+        customClass: {
+          container: 'zindex-sweetalert',
+        },
       });
+    }
   };
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -120,7 +137,7 @@ const Login: FC = () => {
                 <p className="mt-3 text-gray-500 dark:text-gray-300">Ingresa para acceder a tu cuenta</p>
               </div>
               <div className="mt-8">
-                <form>
+                <form onSubmit={onValidateData}>
                   <div>
                     <label htmlFor="email" className="block mb-2 text-sm text-gray-600 dark:text-gray-200">
                       Correo electrónico
@@ -150,13 +167,12 @@ const Login: FC = () => {
                       name="password"
                       id="password"
                       required
-                      placeholder="Tu contraseña"
                       className="block w-full px-4 py-2 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-indigo-400 dark:focus:border-indigo-400 focus:ring-indigo-400 focus:outline-none focus:ring focus:ring-opacity-40"
                     />
                   </div>
                   <div className="mt-6">
                     <button
-                      onClick={onValidateData}
+                      type="submit"
                       className="w-full px-4 py-2 tracking-wide text-white transition-colors duration-300 transform bg-indigo-500 rounded-lg hover:bg-indigo-400 focus:outline-none focus:bg-indigo-400 focus:ring focus:ring-indigo-300 focus:ring-opacity-50"
                     >
                       Ingresar

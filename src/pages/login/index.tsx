@@ -1,9 +1,12 @@
 import { Box, Modal } from '@mui/material';
 import Head from 'next/head';
 import Image from 'next/image';
-import { useState, type FC, ChangeEvent, MouseEvent } from 'react';
+import { useState, type FC, ChangeEvent, MouseEvent, useEffect } from 'react';
 import RegisterForm from './RegisterForm';
 import Swal from 'sweetalert2';
+import { useRouter } from 'next/router';
+import { TokenType } from '@/utils/authMiddleware';
+import jwt_decode from 'jwt-decode';
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -21,6 +24,7 @@ const style = {
 const NEXT_PUBLIC_BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 const Login: FC = () => {
+  const router = useRouter();
   const [registerForm, setRegisterForm] = useState(false);
   const onClickRegister = () => setRegisterForm(true);
   const onClickCloseRegister = () => setRegisterForm(false);
@@ -48,10 +52,8 @@ const Login: FC = () => {
       .then((response) => {
         if (response.ok) {
           response.json().then((res) => {
-            console.log({
-              status: 'Valido',
-              res,
-            });
+            localStorage.setItem('token', res.token);
+            router.push('/home');
           });
         } else {
           response.json().then((res) => {
@@ -79,6 +81,16 @@ const Login: FC = () => {
         });
       });
   };
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      const decodedToken: TokenType = jwt_decode(token);
+      const currentTime = Date.now() / 1000;
+      if (decodedToken.exp > currentTime) {
+        router.push('/home');
+      }
+    }
+  }, []);
   return (
     <>
       <Head>

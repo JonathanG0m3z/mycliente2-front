@@ -7,7 +7,7 @@ import Swal from 'sweetalert2';
 import { useRouter } from 'next/router';
 import { TokenType } from '@/utils/authMiddleware';
 import jwt_decode from 'jwt-decode';
-import { decryptValue, encryptValue } from '@/utils/cryptoHooks';
+import { useDecryptValue, useEncryptValue } from '@/utils/cryptoHooks';
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -51,14 +51,14 @@ const Login: FC = () => {
       },
       body: JSON.stringify({
         ...loginFormValues,
-        password: encryptValue(loginFormValues.password),
+        password: useEncryptValue(loginFormValues.password),
         keepLoggedIn,
       }),
     })
       .then((response) => {
         if (response.ok) {
           response.json().then((res) => {
-            localStorage.setItem('token', decryptValue(res.token));
+            localStorage.setItem('token', useDecryptValue(res.token));
             router.push('/home');
           });
         } else {

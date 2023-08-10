@@ -1,8 +1,9 @@
 import { useAuthMiddleware } from '@/utils/authMiddleware';
+import Navbar from './Navbar';
 
 const Home = () => {
   useAuthMiddleware();
-  return <h1>Home</h1>;
+  return <Navbar />;
 };
 
 export default Home;

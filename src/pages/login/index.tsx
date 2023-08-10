@@ -7,7 +7,7 @@ import Swal from 'sweetalert2';
 import { useRouter } from 'next/router';
 import { TokenType } from '@/utils/authMiddleware';
 import jwt_decode from 'jwt-decode';
-import CryptoJS from 'crypto-js';
+import { decryptValue, encryptValue } from '@/utils/cryptoHooks';
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -23,7 +23,6 @@ const style = {
 };
 
 const NEXT_PUBLIC_BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-const NEXT_PUBLIC_CRYPTOJS_SECRET_KEY = process.env.NEXT_PUBLIC_CRYPTOJS_SECRET_KEY;
 
 const Login: FC = () => {
   const router = useRouter();
@@ -34,6 +33,7 @@ const Login: FC = () => {
     email: '',
     password: '',
   });
+  const [keepLoggedIn, setKeepLoggedIn] = useState(false);
   const onChangeLoginValues = (e: ChangeEvent<HTMLInputElement>) => {
     setLoginFormValues((prevState) => {
       return {
@@ -44,59 +44,48 @@ const Login: FC = () => {
   };
   const onValidateData = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (NEXT_PUBLIC_CRYPTOJS_SECRET_KEY !== undefined) {
-      fetch(`${NEXT_PUBLIC_BACKEND_URL}users/validate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...loginFormValues,
-          password: CryptoJS.AES.encrypt(loginFormValues.password, NEXT_PUBLIC_CRYPTOJS_SECRET_KEY).toString(),
-        }),
-      })
-        .then((response) => {
-          if (response.ok) {
-            response.json().then((res) => {
-              localStorage.setItem('token', res.token);
-              router.push('/home');
-            });
-          } else {
-            response.json().then((res) => {
-              Swal.fire({
-                title: 'Credenciales incorrectas',
-                icon: 'error',
-                confirmButtonText: 'Aceptar',
-                text: res.message,
-                customClass: {
-                  container: 'zindex-sweetalert',
-                },
-              });
-            });
-          }
-        })
-        .catch((error) => {
-          Swal.fire({
-            title: 'Algo salió mal',
-            icon: 'error',
-            confirmButtonText: 'Aceptar',
-            text: error.message,
-            customClass: {
-              container: 'zindex-sweetalert',
-            },
+    fetch(`${NEXT_PUBLIC_BACKEND_URL}users/validate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...loginFormValues,
+        password: encryptValue(loginFormValues.password),
+        keepLoggedIn,
+      }),
+    })
+      .then((response) => {
+        if (response.ok) {
+          response.json().then((res) => {
+            localStorage.setItem('token', decryptValue(res.token));
+            router.push('/home');
           });
+        } else {
+          response.json().then((res) => {
+            Swal.fire({
+              title: 'Credenciales incorrectas',
+              icon: 'error',
+              confirmButtonText: 'Aceptar',
+              text: res.message,
+              customClass: {
+                container: 'zindex-sweetalert',
+              },
+            });
+          });
+        }
+      })
+      .catch((error) => {
+        Swal.fire({
+          title: 'Algo salió mal',
+          icon: 'error',
+          confirmButtonText: 'Aceptar',
+          text: error.message,
+          customClass: {
+            container: 'zindex-sweetalert',
+          },
         });
-    } else {
-      Swal.fire({
-        title: 'ERROR FATAL',
-        icon: 'error',
-        confirmButtonText: 'Aceptar',
-        text: 'Falta SECRET_KEY',
-        customClass: {
-          container: 'zindex-sweetalert',
-        },
       });
-    }
   };
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -169,6 +158,22 @@ const Login: FC = () => {
                       required
                       className="block w-full px-4 py-2 mt-2 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-indigo-400 dark:focus:border-indigo-400 focus:ring-indigo-400 focus:outline-none focus:ring focus:ring-opacity-40"
                     />
+                  </div>
+                  <div className="flex items-center justify-between my-4">
+                    <span className="w-1/5 border-b dark:border-gray-600 lg:w-1/4"></span>
+                    <div className="flex items-center gap-x-2">
+                      <input
+                        type="checkbox"
+                        id="keepLoggedIn"
+                        className="text-indigo-500 border-gray-300 dark:border-gray-700 focus:ring-indigo-400"
+                        checked={keepLoggedIn}
+                        onChange={(e) => setKeepLoggedIn(e.target.checked)}
+                      />
+                      <label htmlFor="keepLoggedIn" className="text-sm text-gray-600 dark:text-gray-200">
+                        Mantener sesión
+                      </label>
+                    </div>
+                    <span className="w-1/5 border-b dark:border-gray-400 lg:w-1/4"></span>
                   </div>
                   <div className="mt-6">
                     <button

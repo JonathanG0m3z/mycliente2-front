@@ -3,6 +3,7 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import Swal from 'sweetalert2';
+import { encryptValue } from '@/utils/cryptoHooks';
 
 const dialCodes = [
   { code: '+57', country: 'Colombia' },
@@ -29,6 +30,7 @@ const dialCodes = [
 ];
 
 const NEXT_PUBLIC_BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+
 interface RegisterFormProps {
   handleCloseForm: () => void;
 }
@@ -57,6 +59,8 @@ const RegisterForm = ({ handleCloseForm }: RegisterFormProps) => {
         ...data,
         name: `${data.firstName} ${data.lastName}`,
         phone: `${selectedCode.replace(/\+/g, '')}${data.phone}`,
+        password: encryptValue(data.password),
+        passwordConfirm: true,
       }),
     })
       .then((response) => {
@@ -64,7 +68,7 @@ const RegisterForm = ({ handleCloseForm }: RegisterFormProps) => {
           response.json().then((res) => {
             handleCloseForm();
             Swal.fire({
-              title: `Usuario ${res.user} creado correctamente`,
+              title: `${res.message}`,
               icon: 'success',
               customClass: {
                 container: 'zindex-sweetalert',

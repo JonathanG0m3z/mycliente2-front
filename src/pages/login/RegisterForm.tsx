@@ -3,7 +3,7 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import Swal from 'sweetalert2';
-import { useEncryptValue } from '@/utils/cryptoHooks';
+import { encryptValue } from '@/utils/cryptoHooks';
 
 const dialCodes = [
   { code: '+57', country: 'Colombia' },
@@ -59,7 +59,7 @@ const RegisterForm = ({ handleCloseForm }: RegisterFormProps) => {
         ...data,
         name: `${data.firstName} ${data.lastName}`,
         phone: `${selectedCode.replace(/\+/g, '')}${data.phone}`,
-        password: useEncryptValue(data.password),
+        password: encryptValue(data.password),
         passwordConfirm: true,
       }),
     })

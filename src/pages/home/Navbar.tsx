@@ -18,6 +18,7 @@ import { useAuthMiddleware } from '@/utils/authMiddleware';
 import { useRouter } from 'next/router';
 import Swal from 'sweetalert2';
 import { encryptValue } from '@/utils/cryptoHooks';
+import { Avatar } from '@mui/material';
 
 const NEXT_PUBLIC_BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -60,7 +61,7 @@ export default function Navbar() {
         if (response.ok) {
           response.json().then(() => {
             localStorage.removeItem('token');
-            router.push('/home');
+            router.push('/login');
           });
         } else {
           response.json().then((res) => {
@@ -178,7 +179,7 @@ export default function Navbar() {
               </Badge>
             </IconButton>
             <IconButton size="large" edge="end" aria-label="account of current user" aria-controls={menuId} aria-haspopup="true" onClick={handleProfileMenuOpen} color="inherit">
-              <AccountCircle />
+              {payload?.picture ? <Avatar alt="Avatar" src={payload.picture} sx={{ width: 35, height: 35 }} /> : <AccountCircle />}
             </IconButton>
           </Box>
           <Box sx={{ display: { xs: 'flex', md: 'none' } }}>

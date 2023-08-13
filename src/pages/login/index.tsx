@@ -25,6 +25,24 @@ const style = {
 
 const NEXT_PUBLIC_BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
+interface GoogleAuthData {
+  iss: string;
+  azp: string;
+  aud: string;
+  sub: string;
+  email: string;
+  email_verified: boolean;
+  nbf: number;
+  name: string;
+  picture: string;
+  given_name: string;
+  family_name: string;
+  locale: string;
+  iat: number;
+  exp: number;
+  jti: string;
+}
+
 const Login: FC = () => {
   const router = useRouter();
   const [registerForm, setRegisterForm] = useState(false);
@@ -90,11 +108,62 @@ const Login: FC = () => {
   };
 
   const handleErrorGoogle = () => {
-    console.log('Error al logear con google');
+    Swal.fire({
+      title: 'Algo salió mal',
+      icon: 'error',
+      confirmButtonText: 'Aceptar',
+      text: 'Algo salió mal con Google',
+      customClass: {
+        container: 'zindex-sweetalert',
+      },
+    });
   };
   const handleSuccesGoogle = (credentialResponse: CredentialResponse) => {
-    const token = jwt_decode(credentialResponse.credential ?? '');
+    const token: GoogleAuthData = jwt_decode(credentialResponse.credential ?? '');
     console.log('token:', token);
+    fetch(`${NEXT_PUBLIC_BACKEND_URL}users/signin`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: token.name,
+        email: token.email,
+        picture: token.picture,
+        password: encryptValue(token.sub),
+      }),
+    })
+      .then((response) => {
+        if (response.ok) {
+          response.json().then((res) => {
+            localStorage.setItem('token', decryptValue(res.token));
+            router.push('/home');
+          });
+        } else {
+          response.json().then((res) => {
+            Swal.fire({
+              title: 'Credenciales incorrectas',
+              icon: 'error',
+              confirmButtonText: 'Aceptar',
+              text: res.message,
+              customClass: {
+                container: 'zindex-sweetalert',
+              },
+            });
+          });
+        }
+      })
+      .catch((error) => {
+        Swal.fire({
+          title: 'Algo salió mal',
+          icon: 'error',
+          confirmButtonText: 'Aceptar',
+          text: error.message,
+          customClass: {
+            container: 'zindex-sweetalert',
+          },
+        });
+      });
   };
   useEffect(() => {
     const token = localStorage.getItem('token');

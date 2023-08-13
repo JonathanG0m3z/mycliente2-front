@@ -6,10 +6,12 @@ import Swal from 'sweetalert2';
 export interface TokenType {
   id: string;
   name: string;
-  password: string;
-  phone: string;
+  password: null;
+  phone: null | string;
   email: string;
-  permission: null | string;
+  picture: string | null;
+  google_account: boolean;
+  permission: null;
   createdAt: string;
   updatedAt: string;
   iat: number;

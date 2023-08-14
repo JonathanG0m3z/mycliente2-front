@@ -1,27 +1,25 @@
-import { Avatar, Box, Button, Container, CssBaseline, Grid, InputLabel, Link, MenuItem, Select, SelectChangeEvent, TextField, Typography } from '@mui/material';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import { Autocomplete, Avatar, Box, Button, Container, CssBaseline, Grid, InputLabel, Link, MenuItem, Select, SelectChangeEvent, TextField, Typography } from '@mui/material';
+import AttachMoneyOutlinedIcon from '@mui/icons-material/AttachMoneyOutlined';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import Swal from 'sweetalert2';
 import { encryptValue } from '@/utils/cryptoHooks';
 import dialCodes from '@/utils/dialCodes';
+import { green } from '@mui/material/colors';
 
 const NEXT_PUBLIC_BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-interface RegisterFormProps {
+interface SalesFormProps {
   handleCloseForm: () => void;
 }
 
-const RegisterForm = ({ handleCloseForm }: RegisterFormProps) => {
+const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
   const {
     register,
     handleSubmit,
     formState: { errors },
-    watch,
   } = useForm();
   const [selectedCode, setSelectedCode] = useState<string>(dialCodes[0].code);
-  const password = React.useRef({});
-  password.current = watch('password', '');
 
   const handleChangeDial = (event: SelectChangeEvent<string>) => {
     setSelectedCode(event.target.value as string);
@@ -78,6 +76,9 @@ const RegisterForm = ({ handleCloseForm }: RegisterFormProps) => {
         });
       });
   };
+  const options = ['Option 1', 'Option 2'];
+  const [nameValue, setNameValue] = React.useState<string | null>(options[0]);
+  const [inputNameValue, setInputNameValue] = React.useState('');
   return (
     <Container component="main" maxWidth="xs">
       <CssBaseline />
@@ -89,48 +90,29 @@ const RegisterForm = ({ handleCloseForm }: RegisterFormProps) => {
           alignItems: 'center',
         }}
       >
-        <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
-          <LockOutlinedIcon />
+        <Avatar sx={{ m: 1, bgcolor: green[500] }}>
+          <AttachMoneyOutlinedIcon />
         </Avatar>
         <Typography component="h1" variant="h5">
-          Crear cuenta
+          Registrar nueva venta
         </Typography>
         <Box component="form" sx={{ mt: 3 }} onSubmit={handleSubmit(onSubmit)}>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                helperText={`${errors.firstName?.message || ''}`}
-                error={!!errors.firstName}
-                {...register('firstName', { required: 'Este campo es requerido', pattern: { value: /^[A-ZÁÉÍÓÚÜÑ]/, message: 'Los nombres deben iniciar en mayúsculas' } })}
-                autoComplete="name"
-                name="firstName"
+            <Grid item xs={12} sm={12}>
+              <Autocomplete
+              
+                value={nameValue}
+                onChange={(event: React.SyntheticEvent<Element, Event>, newValue: string | null) => {
+                  setNameValue(newValue);
+                }}
+                inputValue={inputNameValue}
+                onInputChange={(event, newInputValue) => {
+                  setInputNameValue(newInputValue);
+                }}
                 fullWidth
-                id="firstName"
-                label="Nombres"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                helperText={`${errors.lastName?.message || ''}`}
-                error={!!errors.lastName}
-                {...register('lastName', { required: 'Este campo es requerido', pattern: { value: /^[A-ZÁÉÍÓÚÜÑ]/, message: 'Los apellidos deben iniciar en mayúsculas' } })}
-                fullWidth
-                id="lastName"
-                label="Apellidos"
-                name="lastName"
-                autoComplete="lastname"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                helperText={`${errors.email?.message || ''}`}
-                error={!!errors.email}
-                {...register('email', { required: 'Este campo es requerido', pattern: { value: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/, message: 'Dirección email invalida' } })}
-                fullWidth
-                id="email"
-                label="Correo electrónico"
-                name="email"
-                autoComplete="email"
+                id="controllable-states-demo"
+                options={options}
+                renderInput={(params) => <TextField {...params} label="Nombre del cliente" />}
               />
             </Grid>
             <Grid item xs={12}>
@@ -147,13 +129,37 @@ const RegisterForm = ({ handleCloseForm }: RegisterFormProps) => {
               <TextField
                 helperText={`${errors.phone?.message || ''}`}
                 error={!!errors.phone}
-                {...register('phone', { required: 'Este campo es requerido', pattern: { value: /^[0-9]+$/, message: 'El número de teléfono debe contener solo dígitos' } })}
+                {...register('phone', { required: false, pattern: { value: /^[0-9]+$/, message: 'El número de teléfono debe contener solo dígitos' } })}
                 fullWidth
                 id="phone"
-                label="Numero telefónico"
+                label="Número telefónico"
                 type="number"
                 name="phone"
                 autoComplete="phone"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                helperText={`${errors.email?.message || ''}`}
+                error={!!errors.email}
+                {...register('email', { required: false, pattern: { value: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/, message: 'Dirección email invalida' } })}
+                fullWidth
+                id="email"
+                label="Correo electrónico del cliente"
+                name="email"
+                autoComplete="email"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                helperText={`${errors.lastName?.message || ''}`}
+                error={!!errors.lastName}
+                {...register('lastName', { required: 'Este campo es requerido', pattern: { value: /^[A-ZÁÉÍÓÚÜÑ]/, message: 'Los apellidos deben iniciar en mayúsculas' } })}
+                fullWidth
+                id="lastName"
+                label="Apellidos"
+                name="lastName"
+                autoComplete="lastname"
               />
             </Grid>
             <Grid item xs={12}>
@@ -170,21 +176,6 @@ const RegisterForm = ({ handleCloseForm }: RegisterFormProps) => {
                 label="Contraseña"
                 type="password"
                 id="password"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                helperText={`${errors.passwordConfirm?.message || ''}`}
-                error={!!errors.passwordConfirm}
-                {...register('passwordConfirm', {
-                  required: 'Este campo es requerido',
-                  validate: (value) => value === password.current || 'Las contraseñas no coinciden',
-                })}
-                fullWidth
-                name="passwordConfirm"
-                label="Confirmar contraseña"
-                type="password"
-                id="passwordConfirm"
               />
             </Grid>
             {/* <Grid item xs={12}>
@@ -207,4 +198,4 @@ const RegisterForm = ({ handleCloseForm }: RegisterFormProps) => {
   );
 };
 
-export default RegisterForm;
+export default SalesForm;

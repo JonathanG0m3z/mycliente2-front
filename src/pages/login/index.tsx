@@ -199,7 +199,7 @@ const Login: FC = () => {
             <div className="flex-1">
               <div className="text-center">
                 <div className="flex justify-center mx-auto">
-                  <Image src="https://merakiui.com/images/logo.svg" alt="" width={1000} height={500} className="w-auto h-7 sm:h-8" />
+                  <Image src="/favicon.ico" alt="" width={1000} height={500} className="w-auto h-7 sm:h-8" />
                 </div>
                 <p className="mt-3 text-gray-500 dark:text-gray-300">Ingresa para acceder a tu cuenta</p>
               </div>
@@ -266,7 +266,9 @@ const Login: FC = () => {
                     <button className="text-xs text-center text-gray-500 uppercase dark:text-gray-400 hover:underline">o ingresa con Gmail</button>
                     <span className="w-1/5 border-b dark:border-gray-400 lg:w-1/4"></span>
                   </div>
-                  <GoogleLogin useOneTap onError={handleErrorGoogle} onSuccess={handleSuccesGoogle} theme="filled_black" width="100%" />
+                  <div className="mt-6 flex justify-center">
+                    <GoogleLogin onError={handleErrorGoogle} onSuccess={handleSuccesGoogle} theme="filled_black" width="30px" />
+                  </div>
                 </form>
                 <p className="mt-6 text-sm text-center text-gray-400">
                   ¿Aún no tienes una cuenta?{' '}

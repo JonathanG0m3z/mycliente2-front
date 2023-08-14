@@ -8,6 +8,7 @@ import Badge from '@mui/material/Badge';
 import MenuItem from '@mui/material/MenuItem';
 import Menu from '@mui/material/Menu';
 import MenuIcon from '@mui/icons-material/Menu';
+import OndemandVideoIcon from '@mui/icons-material/OndemandVideo';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import MailIcon from '@mui/icons-material/Mail';
 import NotificationsIcon from '@mui/icons-material/Notifications';
@@ -18,7 +19,7 @@ import { useAuthMiddleware } from '@/utils/authMiddleware';
 import { useRouter } from 'next/router';
 import Swal from 'sweetalert2';
 import { encryptValue } from '@/utils/cryptoHooks';
-import { Avatar } from '@mui/material';
+import { Avatar, Drawer, List, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
 
 const NEXT_PUBLIC_BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -29,6 +30,7 @@ export default function Navbar() {
   const token = localStorage.getItem('token');
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
 
   const isMenuOpen = Boolean(anchorEl);
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
@@ -48,6 +50,12 @@ export default function Navbar() {
 
   const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setMobileMoreAnchorEl(event.currentTarget);
+  };
+  const toggleDrawer = (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
+    if (event.type === 'keydown' && ((event as React.KeyboardEvent).key === 'Tab' || (event as React.KeyboardEvent).key === 'Shift')) {
+      return;
+    }
+    setDrawerOpen(open);
   };
   const onClickLogout = () => {
     fetch(`${NEXT_PUBLIC_BACKEND_URL}users/logOut`, {
@@ -159,7 +167,7 @@ export default function Navbar() {
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static">
         <Toolbar>
-          <IconButton size="large" edge="start" color="inherit" aria-label="open drawer" sx={{ mr: 2 }}>
+          <IconButton onClick={toggleDrawer(true)} size="large" edge="start" color="inherit" aria-label="open drawer" sx={{ mr: 2 }}>
             <MenuIcon />
           </IconButton>
           <Image src="/images/logo.ico" alt="Logo" width={250} height={50} />
@@ -189,6 +197,16 @@ export default function Navbar() {
           </Box>
         </Toolbar>
       </AppBar>
+      <Drawer anchor="left" open={drawerOpen} onClose={toggleDrawer(false)}>
+        <List>
+          <ListItemButton onClick={() => console.log('Servicios')}>
+            <ListItemIcon>
+              <OndemandVideoIcon />
+            </ListItemIcon>
+            <ListItemText primary="Servicios" />
+          </ListItemButton>
+        </List>
+      </Drawer>
       {renderMobileMenu}
       {renderMenu}
     </Box>

@@ -1,4 +1,4 @@
-import { Autocomplete, Avatar, Box, Button, Container, CssBaseline, Grid, InputLabel, Link, MenuItem, Select, SelectChangeEvent, TextField, Typography } from '@mui/material';
+import { Autocomplete, Avatar, Box, Button, Container, CssBaseline, Grid, InputLabel, Link, MenuItem, Select, SelectChangeEvent, TextField, Typography, createFilterOptions } from '@mui/material';
 import AttachMoneyOutlinedIcon from '@mui/icons-material/AttachMoneyOutlined';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -13,7 +13,14 @@ interface SalesFormProps {
   handleCloseForm: () => void;
 }
 
+interface OptionType {
+  inputValue?: string;
+  title: string;
+  year?: number;
+}
+
 const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
+  const filter = createFilterOptions<OptionType>();
   const {
     register,
     handleSubmit,
@@ -76,9 +83,15 @@ const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
         });
       });
   };
-  const options = ['Option 1', 'Option 2'];
-  const [nameValue, setNameValue] = React.useState<string | null>(options[0]);
-  const [inputNameValue, setInputNameValue] = React.useState('');
+  const options: readonly OptionType[] = [
+    { title: 'The Shawshank Redemption', year: 1994 },
+    { title: 'The Godfather', year: 1972 },
+    { title: 'The Godfather: Part II', year: 1974 },
+    { title: 'The Dark Knight', year: 2008 },
+    { title: '12 Angry Men', year: 1957 },
+    { title: "Schindler's List", year: 1993 },
+  ];
+  const [inputNameValue, setInputNameValue] = useState<OptionType | null>(null);
   return (
     <Container component="main" maxWidth="xs">
       <CssBaseline />
@@ -100,19 +113,57 @@ const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
           <Grid container spacing={2}>
             <Grid item xs={12} sm={12}>
               <Autocomplete
-              
-                value={nameValue}
-                onChange={(event: React.SyntheticEvent<Element, Event>, newValue: string | null) => {
-                  setNameValue(newValue);
+                value={inputNameValue}
+                onChange={(event, newValue) => {
+                  if (typeof newValue === 'string') {
+                    setInputNameValue({
+                      title: newValue,
+                    });
+                  } else if (newValue && newValue.inputValue) {
+                    // Create a new value from the user input
+                    setInputNameValue({
+                      title: newValue.inputValue,
+                    });
+                  } else {
+                    setInputNameValue(newValue);
+                  }
                 }}
-                inputValue={inputNameValue}
-                onInputChange={(event, newInputValue) => {
-                  setInputNameValue(newInputValue);
+                filterOptions={(options, params) => {
+                  const filtered = filter(options, params);
+
+                  const { inputValue } = params;
+                  // Suggest the creation of a new value
+                  const isExisting = options.some((option) => inputValue === option.title);
+                  if (inputValue !== '' && !isExisting) {
+                    filtered.push({
+                      inputValue,
+                      title: `Add "${inputValue}"`,
+                    });
+                  }
+
+                  return filtered;
                 }}
-                fullWidth
-                id="controllable-states-demo"
+                selectOnFocus
+                clearOnBlur
+                handleHomeEndKeys
+                id="free-solo-with-text-demo"
                 options={options}
-                renderInput={(params) => <TextField {...params} label="Nombre del cliente" />}
+                getOptionLabel={(option) => {
+                  // Value selected with enter, right from the input
+                  if (typeof option === 'string') {
+                    return option;
+                  }
+                  // Add "xxx" option created dynamically
+                  if (option.inputValue) {
+                    return option.inputValue;
+                  }
+                  // Regular option
+                  return option.title;
+                }}
+                renderOption={(props, option) => <li {...props}>{option.title}</li>}
+                sx={{ width: 300 }}
+                freeSolo
+                renderInput={(params) => <TextField {...params} label="Free solo with text demo" />}
               />
             </Grid>
             <Grid item xs={12}>

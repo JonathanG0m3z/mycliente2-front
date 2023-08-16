@@ -14,9 +14,11 @@ interface SalesFormProps {
 }
 
 interface OptionType {
+  name: string | null;
+  phone?: string | null;
+  id?: string | null;
+  email?: string | null;
   inputValue?: string;
-  title: string;
-  year?: number;
 }
 
 const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
@@ -27,6 +29,11 @@ const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
     formState: { errors },
   } = useForm();
   const [selectedCode, setSelectedCode] = useState<string>(dialCodes[0].code);
+  const [openNameSelect, setOpenNameSelect] = useState(false);
+  const [inputNameValue, setInputNameValue] = useState<OptionType | null>(null);
+  const [clientsSelectOptions, setClientsSelectOptions] = useState<OptionType[]>([]);
+  const [loadingClientSelect, setLoadingClientSelect] = useState<boolean>(false);
+  const [isNewClient, setIsNewClient] = useState<boolean>(false);
 
   const handleChangeDial = (event: SelectChangeEvent<string>) => {
     setSelectedCode(event.target.value as string);
@@ -83,15 +90,51 @@ const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
         });
       });
   };
-  const options: readonly OptionType[] = [
-    { title: 'The Shawshank Redemption', year: 1994 },
-    { title: 'The Godfather', year: 1972 },
-    { title: 'The Godfather: Part II', year: 1974 },
-    { title: 'The Dark Knight', year: 2008 },
-    { title: '12 Angry Men', year: 1957 },
-    { title: "Schindler's List", year: 1993 },
-  ];
-  const [inputNameValue, setInputNameValue] = useState<OptionType | null>(null);
+
+  React.useEffect(() => {
+    if (openNameSelect) {
+      setLoadingClientSelect(true);
+      fetch(`${NEXT_PUBLIC_BACKEND_URL}clients`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${encryptValue(localStorage.getItem('token') ?? '')}`,
+        },
+      })
+        .then((response) => {
+          if (response.ok) {
+            response.json().then((data) => {
+              setClientsSelectOptions(data.clients);
+            });
+          } else {
+            response.json().then((res) => {
+              Swal.fire({
+                title: 'Token invalido',
+                icon: 'error',
+                confirmButtonText: 'Aceptar',
+                text: res.message,
+                customClass: {
+                  container: 'zindex-sweetalert',
+                },
+              });
+            });
+          }
+          setLoadingClientSelect(false);
+        })
+        .catch((error) => {
+          Swal.fire({
+            title: 'Algo salió mal',
+            icon: 'error',
+            confirmButtonText: 'Aceptar',
+            text: error.message,
+            customClass: {
+              container: 'zindex-sweetalert',
+            },
+          });
+          setLoadingClientSelect(false);
+        });
+    }
+  }, [openNameSelect]);
   return (
     <Container component="main" maxWidth="xs">
       <CssBaseline />
@@ -117,90 +160,100 @@ const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
                 onChange={(event, newValue) => {
                   if (typeof newValue === 'string') {
                     setInputNameValue({
-                      title: newValue,
+                      name: newValue,
                     });
-                  } else if (newValue && newValue.inputValue) {
-                    // Create a new value from the user input
+                    setIsNewClient(true);
+                  } else if (newValue && newValue.id) {
                     setInputNameValue({
-                      title: newValue.inputValue,
+                      ...newValue,
                     });
-                  } else {
-                    setInputNameValue(newValue);
+                    setIsNewClient(false);
+                  } else if (newValue && newValue.inputValue) {
+                    setInputNameValue({
+                      name: newValue.inputValue,
+                    });
+                    setIsNewClient(true);
                   }
                 }}
                 filterOptions={(options, params) => {
                   const filtered = filter(options, params);
-
                   const { inputValue } = params;
-                  // Suggest the creation of a new value
-                  const isExisting = options.some((option) => inputValue === option.title);
+                  const isExisting = options.some((option) => inputValue === option.name);
                   if (inputValue !== '' && !isExisting) {
                     filtered.push({
                       inputValue,
-                      title: `Add "${inputValue}"`,
+                      name: `Agregar "${inputValue}"`,
                     });
                   }
-
                   return filtered;
                 }}
                 selectOnFocus
+                loading={loadingClientSelect}
                 clearOnBlur
                 handleHomeEndKeys
-                id="free-solo-with-text-demo"
-                options={options}
+                id="client-name"
+                options={clientsSelectOptions}
+                open={openNameSelect}
+                onOpen={() => {
+                  setOpenNameSelect(true);
+                }}
+                onClose={() => {
+                  setOpenNameSelect(false);
+                }}
                 getOptionLabel={(option) => {
-                  // Value selected with enter, right from the input
                   if (typeof option === 'string') {
                     return option;
                   }
-                  // Add "xxx" option created dynamically
-                  if (option.inputValue) {
-                    return option.inputValue;
+                  if (option.name) {
+                    return option.name;
                   }
-                  // Regular option
-                  return option.title;
+                  return option.name ?? '';
                 }}
-                renderOption={(props, option) => <li {...props}>{option.title}</li>}
-                sx={{ width: 300 }}
+                renderOption={(props, option) => <li {...props}>{option.name}</li>}
+                fullWidth
                 freeSolo
-                renderInput={(params) => <TextField {...params} label="Free solo with text demo" />}
+                renderInput={(params) => <TextField {...params} label="Nombre del cliente" />}
               />
             </Grid>
-            <Grid item xs={12}>
-              <InputLabel id="dial-code-label">País</InputLabel>
-              <Select fullWidth labelId="dial-code-label" id="dial-code" value={selectedCode} label="País" onChange={handleChangeDial}>
-                {dialCodes.map((item) => (
-                  <MenuItem key={item.code} value={item.code}>
-                    {item.country} - {item.code}
-                  </MenuItem>
-                ))}
-              </Select>
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                helperText={`${errors.phone?.message || ''}`}
-                error={!!errors.phone}
-                {...register('phone', { required: false, pattern: { value: /^[0-9]+$/, message: 'El número de teléfono debe contener solo dígitos' } })}
-                fullWidth
-                id="phone"
-                label="Número telefónico"
-                type="number"
-                name="phone"
-                autoComplete="phone"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                helperText={`${errors.email?.message || ''}`}
-                error={!!errors.email}
-                {...register('email', { required: false, pattern: { value: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/, message: 'Dirección email invalida' } })}
-                fullWidth
-                id="email"
-                label="Correo electrónico del cliente"
-                name="email"
-                autoComplete="email"
-              />
-            </Grid>
+            {isNewClient && (
+              <>
+                <Grid item xs={12}>
+                  <InputLabel id="dial-code-label">País</InputLabel>
+                  <Select fullWidth labelId="dial-code-label" id="dial-code" value={selectedCode} label="País" onChange={handleChangeDial}>
+                    {dialCodes.map((item) => (
+                      <MenuItem key={item.code} value={item.code}>
+                        {item.country} - {item.code}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    helperText={`${errors.phone?.message || ''}`}
+                    error={!!errors.phone}
+                    {...register('phone', { required: false, pattern: { value: /^[0-9]+$/, message: 'El número de teléfono debe contener solo dígitos' } })}
+                    fullWidth
+                    id="phone"
+                    label="Número telefónico"
+                    type="number"
+                    name="phone"
+                    autoComplete="phone"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    helperText={`${errors.email?.message || ''}`}
+                    error={!!errors.email}
+                    {...register('email', { required: false, pattern: { value: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/, message: 'Dirección email invalida' } })}
+                    fullWidth
+                    id="email"
+                    label="Correo electrónico del cliente"
+                    name="email"
+                    autoComplete="email"
+                  />
+                </Grid>
+              </>
+            )}
             <Grid item xs={12} sm={6}>
               <TextField
                 helperText={`${errors.lastName?.message || ''}`}

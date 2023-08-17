@@ -1,4 +1,4 @@
-import { Autocomplete, Avatar, Box, Button, Container, CssBaseline, Grid, InputLabel, Link, MenuItem, Select, SelectChangeEvent, TextField, Typography, createFilterOptions } from '@mui/material';
+import { Alert, Avatar, Box, Button, Container, CssBaseline, Divider, Grid, InputLabel, Link, MenuItem, Select, SelectChangeEvent, TextField, Typography } from '@mui/material';
 import AttachMoneyOutlinedIcon from '@mui/icons-material/AttachMoneyOutlined';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -6,6 +6,7 @@ import Swal from 'sweetalert2';
 import { encryptValue } from '@/utils/cryptoHooks';
 import dialCodes from '@/utils/dialCodes';
 import { green } from '@mui/material/colors';
+import QueryAutocomplete, { AutocompleteOptionType } from '@/components/QueryAutocomplete';
 
 const NEXT_PUBLIC_BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -13,27 +14,38 @@ interface SalesFormProps {
   handleCloseForm: () => void;
 }
 
-interface OptionType {
+interface ClientsReponseType {
   name: string | null;
   phone?: string | null;
   id?: string | null;
-  email?: string | null;
+  inputValue?: string;
+}
+
+interface AccountsReponseType {
+  id?: string | null;
+  email: string | null;
   inputValue?: string;
 }
 
 const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
-  const filter = createFilterOptions<OptionType>();
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm();
   const [selectedCode, setSelectedCode] = useState<string>(dialCodes[0].code);
-  const [openNameSelect, setOpenNameSelect] = useState(false);
-  const [inputNameValue, setInputNameValue] = useState<OptionType | null>(null);
-  const [clientsSelectOptions, setClientsSelectOptions] = useState<OptionType[]>([]);
+  /***************CLIENT SELECT STATES */
+  const [openClientSelect, setOpenClientSelect] = useState(false);
+  const [inputClientValue, setInputClientValue] = useState<AutocompleteOptionType | null>(null);
+  const [clientSelectOptions, setClientSelectOptions] = useState<AutocompleteOptionType[]>([]);
   const [loadingClientSelect, setLoadingClientSelect] = useState<boolean>(false);
   const [isNewClient, setIsNewClient] = useState<boolean>(false);
+  /**************ACCOUNT SELECT STATATES */
+  const [openAccountSelect, setOpenAccountSelect] = useState(false);
+  const [inputAccountValue, setInputAccountValue] = useState<AutocompleteOptionType | null>(null);
+  const [accountSelectOptions, setAccountSelectOptions] = useState<AutocompleteOptionType[]>([]);
+  const [loadingAccountSelect, setLoadingAccountSelect] = useState<boolean>(false);
+  const [isNewAccount, setIsNewAccount] = useState<boolean>(false);
 
   const handleChangeDial = (event: SelectChangeEvent<string>) => {
     setSelectedCode(event.target.value as string);
@@ -92,9 +104,9 @@ const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
   };
 
   React.useEffect(() => {
-    if (openNameSelect) {
+    if (openClientSelect) {
       setLoadingClientSelect(true);
-      fetch(`${NEXT_PUBLIC_BACKEND_URL}clients`, {
+      fetch(`${NEXT_PUBLIC_BACKEND_URL}clients/combobox`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -103,8 +115,15 @@ const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
       })
         .then((response) => {
           if (response.ok) {
-            response.json().then((data) => {
-              setClientsSelectOptions(data.clients);
+            response.json().then(({ clients }: { clients: ClientsReponseType[] }) => {
+              setClientSelectOptions(
+                clients.map((client) => {
+                  return {
+                    label: client.name,
+                    id: client.id,
+                  };
+                })
+              );
             });
           } else {
             response.json().then((res) => {
@@ -134,7 +153,58 @@ const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
           setLoadingClientSelect(false);
         });
     }
-  }, [openNameSelect]);
+  }, [openClientSelect]);
+  React.useEffect(() => {
+    if (openAccountSelect) {
+      setLoadingAccountSelect(true);
+      fetch(`${NEXT_PUBLIC_BACKEND_URL}accounts/combobox`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${encryptValue(localStorage.getItem('token') ?? '')}`,
+        },
+      })
+        .then((response) => {
+          if (response.ok) {
+            response.json().then(({ accounts }: { accounts: AccountsReponseType[] }) => {
+              setAccountSelectOptions(
+                accounts.map((account) => {
+                  return {
+                    label: account.email,
+                    id: account.id,
+                  };
+                })
+              );
+            });
+          } else {
+            response.json().then((res) => {
+              Swal.fire({
+                title: 'Token invalido',
+                icon: 'error',
+                confirmButtonText: 'Aceptar',
+                text: res.message,
+                customClass: {
+                  container: 'zindex-sweetalert',
+                },
+              });
+            });
+          }
+          setLoadingAccountSelect(false);
+        })
+        .catch((error) => {
+          Swal.fire({
+            title: 'Algo salió mal',
+            icon: 'error',
+            confirmButtonText: 'Aceptar',
+            text: error.message,
+            customClass: {
+              container: 'zindex-sweetalert',
+            },
+          });
+          setLoadingAccountSelect(false);
+        });
+    }
+  }, [openAccountSelect]);
   return (
     <Container component="main" maxWidth="xs">
       <CssBaseline />
@@ -155,67 +225,18 @@ const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
         <Box component="form" sx={{ mt: 3 }} onSubmit={handleSubmit(onSubmit)}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={12}>
-              <Autocomplete
-                value={inputNameValue}
-                onChange={(event, newValue) => {
-                  if (typeof newValue === 'string') {
-                    setInputNameValue({
-                      name: newValue,
-                    });
-                    setIsNewClient(true);
-                  } else if (newValue && newValue.id) {
-                    setInputNameValue({
-                      ...newValue,
-                    });
-                    setIsNewClient(false);
-                  } else if (newValue && newValue.inputValue) {
-                    setInputNameValue({
-                      name: newValue.inputValue,
-                    });
-                    setIsNewClient(true);
-                  }
-                }}
-                filterOptions={(options, params) => {
-                  const filtered = filter(options, params);
-                  const { inputValue } = params;
-                  const isExisting = options.some((option) => inputValue === option.name);
-                  if (inputValue !== '' && !isExisting) {
-                    filtered.push({
-                      inputValue,
-                      name: `Agregar "${inputValue}"`,
-                    });
-                  }
-                  return filtered;
-                }}
-                selectOnFocus
+              <QueryAutocomplete
+                inputValue={inputClientValue}
+                setInputValue={setInputClientValue}
+                options={clientSelectOptions}
+                setIsNewValue={setIsNewClient}
                 loading={loadingClientSelect}
-                clearOnBlur
-                handleHomeEndKeys
-                id="client-name"
-                options={clientsSelectOptions}
-                open={openNameSelect}
-                onOpen={() => {
-                  setOpenNameSelect(true);
-                }}
-                onClose={() => {
-                  setOpenNameSelect(false);
-                }}
-                getOptionLabel={(option) => {
-                  if (typeof option === 'string') {
-                    return option;
-                  }
-                  if (option.name) {
-                    return option.name;
-                  }
-                  return option.name ?? '';
-                }}
-                renderOption={(props, option) => <li {...props}>{option.name}</li>}
-                fullWidth
-                freeSolo
-                renderInput={(params) => <TextField {...params} label="Nombre del cliente" />}
+                open={openClientSelect}
+                setOpen={setOpenClientSelect}
+                placeholder="Nombre del cliente"
               />
             </Grid>
-            {isNewClient && (
+            {isNewClient ? (
               <>
                 <Grid item xs={12}>
                   <InputLabel id="dial-code-label">País</InputLabel>
@@ -252,7 +273,76 @@ const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
                     autoComplete="email"
                   />
                 </Grid>
+                <Grid item xs={12}>
+                  <Divider />
+                </Grid>
               </>
+            ) : (
+              <Grid item xs={12}>
+                <Alert hidden={inputClientValue === null} severity="success">
+                  Los datos de este cliente ya se encuentran almacenados
+                </Alert>
+              </Grid>
+            )}
+            <Grid item xs={12} sm={12}>
+              <QueryAutocomplete
+                inputValue={inputAccountValue}
+                setInputValue={setInputAccountValue}
+                options={accountSelectOptions}
+                setIsNewValue={setIsNewAccount}
+                loading={loadingAccountSelect}
+                open={openAccountSelect}
+                setOpen={setOpenAccountSelect}
+                placeholder="Email de la cuenta"
+              />
+            </Grid>
+            {isNewAccount ? (
+              <>
+                <Grid item xs={12}>
+                  <InputLabel id="dial-code-label">País</InputLabel>
+                  <Select fullWidth labelId="dial-code-label" id="dial-code" value={selectedCode} label="País" onChange={handleChangeDial}>
+                    {dialCodes.map((item) => (
+                      <MenuItem key={item.code} value={item.code}>
+                        {item.country} - {item.code}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    helperText={`${errors.phone?.message || ''}`}
+                    error={!!errors.phone}
+                    {...register('phone', { required: false, pattern: { value: /^[0-9]+$/, message: 'El número de teléfono debe contener solo dígitos' } })}
+                    fullWidth
+                    id="phone"
+                    label="Número telefónico"
+                    type="number"
+                    name="phone"
+                    autoComplete="phone"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    helperText={`${errors.email?.message || ''}`}
+                    error={!!errors.email}
+                    {...register('email', { required: false, pattern: { value: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/, message: 'Dirección email invalida' } })}
+                    fullWidth
+                    id="email"
+                    label="Correo electrónico del cliente"
+                    name="email"
+                    autoComplete="email"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <Divider />
+                </Grid>
+              </>
+            ) : (
+              <Grid item xs={12}>
+                <Alert hidden={inputAccountValue === null} severity="success">
+                  Los datos de esta cuenta ya se encuentran almacenados
+                </Alert>
+              </Grid>
             )}
             <Grid item xs={12} sm={6}>
               <TextField

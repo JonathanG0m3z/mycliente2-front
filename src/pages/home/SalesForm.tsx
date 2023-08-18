@@ -7,6 +7,8 @@ import { encryptValue } from '@/utils/cryptoHooks';
 import dialCodes from '@/utils/dialCodes';
 import { green } from '@mui/material/colors';
 import QueryAutocomplete, { AutocompleteOptionType } from '@/components/QueryAutocomplete';
+import { DatePicker } from '@mui/x-date-pickers';
+import moment from 'moment';
 
 const NEXT_PUBLIC_BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -299,42 +301,32 @@ const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
             {isNewAccount ? (
               <>
                 <Grid item xs={12}>
-                  <InputLabel id="dial-code-label">País</InputLabel>
-                  <Select fullWidth labelId="dial-code-label" id="dial-code" value={selectedCode} label="País" onChange={handleChangeDial}>
-                    {dialCodes.map((item) => (
-                      <MenuItem key={item.code} value={item.code}>
-                        {item.country} - {item.code}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </Grid>
-                <Grid item xs={12}>
                   <TextField
-                    helperText={`${errors.phone?.message || ''}`}
-                    error={!!errors.phone}
-                    {...register('phone', { required: false, pattern: { value: /^[0-9]+$/, message: 'El número de teléfono debe contener solo dígitos' } })}
+                    helperText={`${errors.account_pass?.message || ''}`}
+                    error={!!errors.account_pass}
+                    {...register('account_pass', { required: 'Este campo es requerido' })}
                     fullWidth
-                    id="phone"
-                    label="Número telefónico"
+                    id="account_pass"
+                    label="Contraseña de la cuenta*"
+                    name="account_pass"
+                    autoComplete="account_pass"
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField
+                    helperText={`${errors.account_profiles?.message || ''}`}
+                    error={!!errors.account_profiles}
+                    {...register('account_profiles', { required: 'Este campo es requerido' })}
+                    fullWidth
+                    id="account_profiles"
+                    label="Cantidad perfiles cuenta*"
                     type="number"
-                    name="phone"
-                    autoComplete="phone"
+                    name="account_profiles"
+                    autoComplete="account_profiles"
                   />
                 </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    helperText={`${errors.email?.message || ''}`}
-                    error={!!errors.email}
-                    {...register('email', { required: false, pattern: { value: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/, message: 'Dirección email invalida' } })}
-                    fullWidth
-                    id="email"
-                    label="Correo electrónico del cliente"
-                    name="email"
-                    autoComplete="email"
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <Divider />
+                <Grid item xs={6}>
+                  <DatePicker label="Fecha de expiración de la cuenta" defaultValue={moment().add(1, 'month')} format="DD-MM-YYYY" />
                 </Grid>
               </>
             ) : (

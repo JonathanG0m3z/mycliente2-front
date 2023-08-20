@@ -1,16 +1,35 @@
-import { Alert, Avatar, Box, Button, Container, CssBaseline, Divider, Grid, InputLabel, Link, MenuItem, Select, SelectChangeEvent, TextField, Typography } from '@mui/material';
+import {
+  Alert,
+  Autocomplete,
+  Avatar,
+  Box,
+  Button,
+  Container,
+  CssBaseline,
+  Divider,
+  Grid,
+  InputAdornment,
+  InputLabel,
+  MenuItem,
+  Select,
+  SelectChangeEvent,
+  TextField,
+  Typography,
+  createFilterOptions,
+} from '@mui/material';
 import AttachMoneyOutlinedIcon from '@mui/icons-material/AttachMoneyOutlined';
+import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import Swal from 'sweetalert2';
-import { encryptValue } from '@/utils/cryptoHooks';
+// import { encryptValue } from '@/utils/cryptoHooks';
 import dialCodes from '@/utils/dialCodes';
 import { green } from '@mui/material/colors';
 import QueryAutocomplete, { AutocompleteOptionType } from '@/components/QueryAutocomplete';
 import { DatePicker } from '@mui/x-date-pickers';
 import moment from 'moment';
-
-const NEXT_PUBLIC_BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+import 'moment/locale/es';
+import { useLazyFetch } from '@/utils/useFetch';
 
 interface SalesFormProps {
   handleCloseForm: () => void;
@@ -28,185 +47,88 @@ interface AccountsReponseType {
   email: string | null;
   inputValue?: string;
 }
+interface ServicesReponseType {
+  id: string;
+  name: string;
+}
 
 const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
   const {
     register,
     handleSubmit,
     formState: { errors },
+    control,
+    setValue,
   } = useForm();
   const [selectedCode, setSelectedCode] = useState<string>(dialCodes[0].code);
   /***************CLIENT SELECT STATES */
-  const [openClientSelect, setOpenClientSelect] = useState(false);
-  const [inputClientValue, setInputClientValue] = useState<AutocompleteOptionType | null>(null);
-  const [clientSelectOptions, setClientSelectOptions] = useState<AutocompleteOptionType[]>([]);
-  const [loadingClientSelect, setLoadingClientSelect] = useState<boolean>(false);
+  const [clientSelected, setClientSelected] = useState<AutocompleteOptionType | null>(null);
   const [isNewClient, setIsNewClient] = useState<boolean>(false);
   /**************ACCOUNT SELECT STATATES */
-  const [openAccountSelect, setOpenAccountSelect] = useState(false);
-  const [inputAccountValue, setInputAccountValue] = useState<AutocompleteOptionType | null>(null);
-  const [accountSelectOptions, setAccountSelectOptions] = useState<AutocompleteOptionType[]>([]);
-  const [loadingAccountSelect, setLoadingAccountSelect] = useState<boolean>(false);
+  const [accountSelected, setAccountSelected] = useState<AutocompleteOptionType | null>(null);
   const [isNewAccount, setIsNewAccount] = useState<boolean>(false);
+
+  const filter = createFilterOptions<AutocompleteOptionType>();
 
   const handleChangeDial = (event: SelectChangeEvent<string>) => {
     setSelectedCode(event.target.value as string);
   };
   const onSubmit = (data: any) => {
-    fetch(`${NEXT_PUBLIC_BACKEND_URL}users`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        ...data,
-        name: `${data.firstName} ${data.lastName}`,
-        phone: `${selectedCode.replace(/\+/g, '')}${data.phone}`,
-        password: encryptValue(data.password),
-        passwordConfirm: true,
-      }),
-    })
-      .then((response) => {
-        if (response.ok) {
-          response.json().then((res) => {
-            handleCloseForm();
-            Swal.fire({
-              title: `${res.message}`,
-              icon: 'success',
-              customClass: {
-                container: 'zindex-sweetalert',
-              },
-            });
-          });
-        } else {
-          response.json().then((res) => {
-            Swal.fire({
-              title: 'Error al crear el usuario',
-              icon: 'error',
-              confirmButtonText: 'Aceptar',
-              text: res.message,
-              customClass: {
-                container: 'zindex-sweetalert',
-              },
-            });
-          });
-        }
-      })
-      .catch((error) => {
-        Swal.fire({
-          title: 'Algo salió mal',
-          icon: 'error',
-          confirmButtonText: 'Aceptar',
-          text: error.message,
-          customClass: {
-            container: 'zindex-sweetalert',
-          },
-        });
-      });
+    console.log(data);
   };
 
+  const { data: dataClients, error: errorClient, loading: loadingClients, fetchApiData: getClients } = useLazyFetch();
+  const { data: dataAccounts, error: errorAccount, loading: loadingAccounts, fetchApiData: getAccounts } = useLazyFetch();
+  const { data: dataServices, error: errorService, loading: loadingServices, fetchApiData: getServices } = useLazyFetch();
+
+  const onOpenClientsCombo = () => {
+    getClients('clients/combobox', 'GET');
+  };
+  const onOpenAccountsCombo = () => {
+    getAccounts('accounts/combobox', 'GET');
+  };
+  const onOpenServicesCombo = () => {
+    getServices('services', 'GET');
+  };
   React.useEffect(() => {
-    if (openClientSelect) {
-      setLoadingClientSelect(true);
-      fetch(`${NEXT_PUBLIC_BACKEND_URL}clients/combobox`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${encryptValue(localStorage.getItem('token') ?? '')}`,
+    if (errorClient !== null) {
+      Swal.fire({
+        title: 'Algo salió mal',
+        icon: 'error',
+        confirmButtonText: 'Aceptar',
+        text: errorClient.message,
+        customClass: {
+          container: 'zindex-sweetalert',
         },
-      })
-        .then((response) => {
-          if (response.ok) {
-            response.json().then(({ clients }: { clients: ClientsReponseType[] }) => {
-              setClientSelectOptions(
-                clients.map((client) => {
-                  return {
-                    label: client.name,
-                    id: client.id,
-                  };
-                })
-              );
-            });
-          } else {
-            response.json().then((res) => {
-              Swal.fire({
-                title: 'Token invalido',
-                icon: 'error',
-                confirmButtonText: 'Aceptar',
-                text: res.message,
-                customClass: {
-                  container: 'zindex-sweetalert',
-                },
-              });
-            });
-          }
-          setLoadingClientSelect(false);
-        })
-        .catch((error) => {
-          Swal.fire({
-            title: 'Algo salió mal',
-            icon: 'error',
-            confirmButtonText: 'Aceptar',
-            text: error.message,
-            customClass: {
-              container: 'zindex-sweetalert',
-            },
-          });
-          setLoadingClientSelect(false);
-        });
+      });
     }
-  }, [openClientSelect]);
+  }, [errorClient]);
   React.useEffect(() => {
-    if (openAccountSelect) {
-      setLoadingAccountSelect(true);
-      fetch(`${NEXT_PUBLIC_BACKEND_URL}accounts/combobox`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${encryptValue(localStorage.getItem('token') ?? '')}`,
+    if (errorAccount !== null) {
+      Swal.fire({
+        title: 'Algo salió mal',
+        icon: 'error',
+        confirmButtonText: 'Aceptar',
+        text: errorAccount.message,
+        customClass: {
+          container: 'zindex-sweetalert',
         },
-      })
-        .then((response) => {
-          if (response.ok) {
-            response.json().then(({ accounts }: { accounts: AccountsReponseType[] }) => {
-              setAccountSelectOptions(
-                accounts.map((account) => {
-                  return {
-                    label: account.email,
-                    id: account.id,
-                  };
-                })
-              );
-            });
-          } else {
-            response.json().then((res) => {
-              Swal.fire({
-                title: 'Token invalido',
-                icon: 'error',
-                confirmButtonText: 'Aceptar',
-                text: res.message,
-                customClass: {
-                  container: 'zindex-sweetalert',
-                },
-              });
-            });
-          }
-          setLoadingAccountSelect(false);
-        })
-        .catch((error) => {
-          Swal.fire({
-            title: 'Algo salió mal',
-            icon: 'error',
-            confirmButtonText: 'Aceptar',
-            text: error.message,
-            customClass: {
-              container: 'zindex-sweetalert',
-            },
-          });
-          setLoadingAccountSelect(false);
-        });
+      });
     }
-  }, [openAccountSelect]);
+  }, [errorAccount]);
+  React.useEffect(() => {
+    if (errorService !== null) {
+      Swal.fire({
+        title: 'Algo salió mal',
+        icon: 'error',
+        confirmButtonText: 'Aceptar',
+        text: errorService.message,
+        customClass: {
+          container: 'zindex-sweetalert',
+        },
+      });
+    }
+  }, [errorService]);
   return (
     <Container component="main" maxWidth="xs">
       <CssBaseline />
@@ -227,15 +149,28 @@ const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
         <Box component="form" sx={{ mt: 3 }} onSubmit={handleSubmit(onSubmit)}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={12}>
-              <QueryAutocomplete
-                inputValue={inputClientValue}
-                setInputValue={setInputClientValue}
-                options={clientSelectOptions}
-                setIsNewValue={setIsNewClient}
-                loading={loadingClientSelect}
-                open={openClientSelect}
-                setOpen={setOpenClientSelect}
-                placeholder="Nombre del cliente"
+              <Controller
+                name="client"
+                control={control}
+                rules={{ required: 'Este campo es requerido' }}
+                render={({ field }) => (
+                  <QueryAutocomplete
+                    {...field}
+                    onChangeControl={(value) => field.onChange(value)}
+                    optionSelected={clientSelected}
+                    setOptionSelected={setClientSelected}
+                    options={dataClients?.clients.map((client: ClientsReponseType) => {
+                      return {
+                        label: client.name,
+                        id: client.id,
+                      };
+                    })}
+                    setIsNewValue={setIsNewClient}
+                    loading={loadingClients}
+                    onOpen={onOpenClientsCombo}
+                    renderInput={(params) => <TextField {...params} label="Nombre del cliente" helperText={`${errors.client?.message || ''}`} error={!!errors.client} />}
+                  />
+                )}
               />
             </Grid>
             {isNewClient ? (
@@ -281,25 +216,69 @@ const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
               </>
             ) : (
               <Grid item xs={12}>
-                <Alert hidden={inputClientValue === null} severity="success">
+                <Alert hidden={clientSelected === null} severity="success">
                   Los datos de este cliente ya se encuentran almacenados
                 </Alert>
               </Grid>
             )}
             <Grid item xs={12} sm={12}>
-              <QueryAutocomplete
-                inputValue={inputAccountValue}
-                setInputValue={setInputAccountValue}
-                options={accountSelectOptions}
-                setIsNewValue={setIsNewAccount}
-                loading={loadingAccountSelect}
-                open={openAccountSelect}
-                setOpen={setOpenAccountSelect}
-                placeholder="Email de la cuenta"
+              <Controller
+                name="account"
+                control={control}
+                rules={{ required: 'Este campo es requerido' }}
+                render={({ field }) => (
+                  <QueryAutocomplete
+                    {...field}
+                    onChangeControl={(value) => field.onChange(value)}
+                    optionSelected={accountSelected}
+                    setOptionSelected={setAccountSelected}
+                    options={dataAccounts?.accounts?.map((account: AccountsReponseType) => {
+                      return {
+                        label: account.email,
+                        id: account.id,
+                      };
+                    })}
+                    setIsNewValue={setIsNewAccount}
+                    loading={loadingAccounts}
+                    onOpen={onOpenAccountsCombo}
+                    renderInput={(params) => <TextField {...params} label="Email de la cuenta" helperText={`${errors.account?.message || ''}`} error={!!errors.account} />}
+                  />
+                )}
               />
             </Grid>
             {isNewAccount ? (
               <>
+                <Grid item xs={12}>
+                  <Controller
+                    name="service"
+                    control={control}
+                    rules={{ required: 'Este campo es requerido' }}
+                    render={({ field }) => (
+                      <Autocomplete
+                        {...field}
+                        filterOptions={(options, params) => filter(options, params)}
+                        onChange={(event, value) => field.onChange(value)}
+                        options={
+                          dataServices?.services?.map((service: ServicesReponseType) => {
+                            return {
+                              label: service.name,
+                              id: service.id,
+                            };
+                          }) ?? []
+                        }
+                        selectOnFocus
+                        clearOnBlur
+                        handleHomeEndKeys
+                        renderOption={(props, option) => <li {...props}>{option.label}</li>}
+                        loading={loadingServices}
+                        fullWidth
+                        onOpen={onOpenServicesCombo}
+                        freeSolo
+                        renderInput={(params) => <TextField {...params} label="Servicio" helperText={`${errors.service?.message || ''}`} error={!!errors.service} />}
+                      />
+                    )}
+                  />
+                </Grid>
                 <Grid item xs={12}>
                   <TextField
                     helperText={`${errors.account_pass?.message || ''}`}
@@ -312,7 +291,7 @@ const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
                     autoComplete="account_pass"
                   />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={12}>
                   <TextField
                     helperText={`${errors.account_profiles?.message || ''}`}
                     error={!!errors.account_profiles}
@@ -325,59 +304,108 @@ const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
                     autoComplete="account_profiles"
                   />
                 </Grid>
-                <Grid item xs={6}>
-                  <DatePicker label="Fecha de expiración de la cuenta" defaultValue={moment().add(1, 'month')} format="DD-MM-YYYY" />
+                <Grid item xs={12}>
+                  <Controller
+                    name="accountExpiration"
+                    control={control}
+                    rules={{ required: 'Este campo es requerido' }}
+                    defaultValue={moment().add(1, 'month')}
+                    render={({ field }) => (
+                      <DatePicker
+                        {...field}
+                        onChange={(date) => {
+                          field.onChange(date);
+                          setValue('renewDate', date);
+                        }}
+                        label="Fecha expiración cuenta*"
+                        format="LL"
+                        disablePast
+                        slotProps={{ textField: { fullWidth: true, helperText: `${errors.accountExpiration?.message || ''}` } }}
+                      />
+                    )}
+                  />
                 </Grid>
               </>
             ) : (
               <Grid item xs={12}>
-                <Alert hidden={inputAccountValue === null} severity="success">
+                <Alert hidden={accountSelected === null} severity="success">
                   Los datos de esta cuenta ya se encuentran almacenados
                 </Alert>
               </Grid>
             )}
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12}>
+              <Controller
+                name="expiration"
+                control={control}
+                rules={{ required: 'Este campo es requerido' }}
+                defaultValue={moment().add(1, 'month')}
+                render={({ field }) => (
+                  <DatePicker
+                    {...field}
+                    onChange={(date) => field.onChange(date)}
+                    label="Fecha de renovación cliente*"
+                    format="LL"
+                    disablePast
+                    slotProps={{ textField: { fullWidth: true, helperText: `${errors.expiration?.message || ''}` } }}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid item xs={6}>
               <TextField
-                helperText={`${errors.lastName?.message || ''}`}
-                error={!!errors.lastName}
-                {...register('lastName', { required: 'Este campo es requerido', pattern: { value: /^[A-ZÁÉÍÓÚÜÑ]/, message: 'Los apellidos deben iniciar en mayúsculas' } })}
+                helperText={`${errors.profile?.message || ''}`}
+                error={!!errors.profile}
+                {...register('profile', {
+                  required: false,
+                })}
                 fullWidth
-                id="lastName"
-                label="Apellidos"
-                name="lastName"
-                autoComplete="lastname"
+                name="profile"
+                label="Perfil (Opcional)"
+                id="profile"
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                helperText={`${errors.pin?.message || ''}`}
+                error={!!errors.pin}
+                {...register('pin', {
+                  required: false,
+                  pattern: { value: /^[0-9]+$/, message: 'El número de teléfono debe contener solo dígitos' },
+                })}
+                fullWidth
+                name="pin"
+                label="PIN (Opcional)"
+                id="pin"
               />
             </Grid>
             <Grid item xs={12}>
               <TextField
-                helperText={`${errors.password?.message || ''}`}
-                error={!!errors.password}
-                {...register('password', {
+                helperText={`${errors.price?.message || ''}`}
+                error={!!errors.price}
+                {...register('price', {
                   required: 'Este campo es requerido',
-                  pattern: { value: /^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])[A-Za-z0-9!@#$%^&*]+$/, message: 'La contraseña debe contener al menos una mayúscula, un número y un carácter especial' },
-                  minLength: { value: 6, message: 'La contraseña debe ser de almenos 6 caracteres' },
+                  pattern: { value: /^[0-9]+$/, message: 'El precio de venta debe contener solo dígitos' },
                 })}
                 fullWidth
-                name="password"
-                label="Contraseña"
-                type="password"
-                id="password"
+                name="price"
+                label="Precio de Venta"
+                id="price"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <MonetizationOnIcon />
+                    </InputAdornment>
+                  ),
+                }}
               />
             </Grid>
-            {/* <Grid item xs={12}>
-              <FormControlLabel control={<Checkbox value="allowExtraEmails" color="primary" />} label="I want to receive inspiration, marketing promotions and updates via email." />
-            </Grid> */}
           </Grid>
-          <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>
-            Crear
+          <Button type="submit" color="success" fullWidth variant="outlined" sx={{ mt: 3, mb: 2 }}>
+            Registrar
           </Button>
-          <Grid container justifyContent="flex-end">
-            <Grid item>
-              <Link onClick={handleCloseForm} href="#" variant="body2">
-                ¿Ya tienes una cuenta? Ingresa
-              </Link>
-            </Grid>
-          </Grid>
+          <Button onClick={handleCloseForm} color="error" fullWidth variant="outlined">
+            Cancelar
+          </Button>
         </Box>
       </Box>
     </Container>

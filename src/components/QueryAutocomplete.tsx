@@ -1,4 +1,4 @@
-import { Autocomplete, TextField, createFilterOptions } from '@mui/material';
+import { Autocomplete, AutocompleteProps, createFilterOptions } from '@mui/material';
 
 export interface AutocompleteOptionType {
   label: string | null;
@@ -6,43 +6,42 @@ export interface AutocompleteOptionType {
   inputValue?: string;
 }
 
-interface QueryAutocompleteProps {
-  inputValue: AutocompleteOptionType | null;
+interface QueryAutocompleteProps extends AutocompleteProps<AutocompleteOptionType, false, false, true> {
+  optionSelected: AutocompleteOptionType | null;
   // eslint-disable-next-line no-unused-vars
-  setInputValue: (value: AutocompleteOptionType | null) => void;
+  setOptionSelected: (value: AutocompleteOptionType | null) => void;
   options: AutocompleteOptionType[];
   // eslint-disable-next-line no-unused-vars
   setIsNewValue: (value: boolean) => void;
-  loading: boolean;
-  open: boolean;
   // eslint-disable-next-line no-unused-vars
-  setOpen: (value: boolean) => void;
-  placeholder: string;
+  onChangeControl?: (value: string | AutocompleteOptionType | null) => void;
 }
 
-const QueryAutocomplete = ({ inputValue, setInputValue, options, setIsNewValue, loading, open, setOpen, placeholder }: QueryAutocompleteProps) => {
+const QueryAutocomplete = ({ optionSelected, setOptionSelected, options = [], setIsNewValue, onChangeControl, ...autoCompleteProps }: QueryAutocompleteProps) => {
   const filter = createFilterOptions<AutocompleteOptionType>();
   return (
     <Autocomplete
-      value={inputValue}
+      {...autoCompleteProps}
+      value={optionSelected}
       onChange={(event, newValue) => {
+        if (onChangeControl) onChangeControl(newValue);
         if (typeof newValue === 'string') {
-          setInputValue({
+          setOptionSelected({
             label: newValue,
           });
           setIsNewValue(true);
         } else if (newValue && newValue.id) {
-          setInputValue({
+          setOptionSelected({
             ...newValue,
           });
           setIsNewValue(false);
         } else if (newValue && newValue.inputValue) {
-          setInputValue({
+          setOptionSelected({
             label: newValue.inputValue,
           });
           setIsNewValue(true);
         } else {
-          setInputValue(newValue);
+          setOptionSelected(newValue);
           setIsNewValue(false);
         }
       }}
@@ -59,18 +58,9 @@ const QueryAutocomplete = ({ inputValue, setInputValue, options, setIsNewValue, 
         return filtered;
       }}
       selectOnFocus
-      loading={loading}
       clearOnBlur
       handleHomeEndKeys
-      id="client-name"
       options={options}
-      open={open}
-      onOpen={() => {
-        setOpen(true);
-      }}
-      onClose={() => {
-        setOpen(false);
-      }}
       getOptionLabel={(option) => {
         if (typeof option === 'string') {
           return option;
@@ -83,7 +73,6 @@ const QueryAutocomplete = ({ inputValue, setInputValue, options, setIsNewValue, 
       renderOption={(props, option) => <li {...props}>{option.label}</li>}
       fullWidth
       freeSolo
-      renderInput={(params) => <TextField {...params} label={placeholder} />}
     />
   );
 };

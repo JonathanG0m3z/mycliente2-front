@@ -4,6 +4,7 @@ import {
   Avatar,
   Box,
   Button,
+  CircularProgress,
   Container,
   CssBaseline,
   Divider,
@@ -22,7 +23,7 @@ import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import Swal from 'sweetalert2';
-// import { encryptValue } from '@/utils/cryptoHooks';
+import { encryptValue } from '@/utils/cryptoHooks';
 import dialCodes from '@/utils/dialCodes';
 import { green } from '@mui/material/colors';
 import QueryAutocomplete, { AutocompleteOptionType } from '@/components/QueryAutocomplete';
@@ -59,6 +60,7 @@ const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
     formState: { errors },
     control,
     setValue,
+    reset,
   } = useForm();
   const [selectedCode, setSelectedCode] = useState<string>(dialCodes[0].code);
   /***************CLIENT SELECT STATES */
@@ -74,12 +76,41 @@ const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
     setSelectedCode(event.target.value as string);
   };
   const onSubmit = (data: any) => {
-    console.log(data);
+    createSale('sales', 'POST', {
+      ...data,
+      price: Number(data.price),
+      pin: data.pin === '' ? null : data.pin,
+      profile: data.profile === '' ? null : data.profile,
+      phone: data.phone ? `${selectedCode.replace('+', '')}${data.phone}` : null,
+      password: encryptValue(data.password),
+    })
+      .then(() => {
+        Swal.fire({
+          title: 'Venta registrada con éxito',
+          icon: 'success',
+          confirmButtonText: 'Aceptar',
+          customClass: {
+            container: 'zindex-sweetalert',
+          },
+        }).then(() => reset());
+      })
+      .catch((err) => {
+        Swal.fire({
+          title: 'Error',
+          icon: 'error',
+          confirmButtonText: 'Aceptar',
+          text: err,
+          customClass: {
+            container: 'zindex-sweetalert',
+          },
+        });
+      });
   };
 
   const { data: dataClients, error: errorClient, loading: loadingClients, fetchApiData: getClients } = useLazyFetch();
   const { data: dataAccounts, error: errorAccount, loading: loadingAccounts, fetchApiData: getAccounts } = useLazyFetch();
   const { data: dataServices, error: errorService, loading: loadingServices, fetchApiData: getServices } = useLazyFetch();
+  const { loading: loadingSubmit, fetchApiData: createSale } = useLazyFetch();
 
   const onOpenClientsCombo = () => {
     getClients('clients/combobox', 'GET');
@@ -225,7 +256,7 @@ const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
               <Controller
                 name="account"
                 control={control}
-                rules={{ required: 'Este campo es requerido' }}
+                rules={{ required: 'Este campo es requerido', pattern: { value: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/, message: 'Dirección email invalida' } }}
                 render={({ field }) => (
                   <QueryAutocomplete
                     {...field}
@@ -281,27 +312,27 @@ const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
                 </Grid>
                 <Grid item xs={12}>
                   <TextField
-                    helperText={`${errors.account_pass?.message || ''}`}
-                    error={!!errors.account_pass}
-                    {...register('account_pass', { required: 'Este campo es requerido' })}
+                    helperText={`${errors.password?.message || ''}`}
+                    error={!!errors.password}
+                    {...register('password', { required: 'Este campo es requerido' })}
                     fullWidth
-                    id="account_pass"
+                    id="password"
                     label="Contraseña de la cuenta*"
-                    name="account_pass"
-                    autoComplete="account_pass"
+                    name="password"
+                    autoComplete="password_account"
                   />
                 </Grid>
                 <Grid item xs={12}>
                   <TextField
-                    helperText={`${errors.account_profiles?.message || ''}`}
-                    error={!!errors.account_profiles}
-                    {...register('account_profiles', { required: 'Este campo es requerido' })}
+                    helperText={`${errors.profiles?.message || ''}`}
+                    error={!!errors.profiles}
+                    {...register('profiles', { required: 'Este campo es requerido' })}
                     fullWidth
-                    id="account_profiles"
+                    id="profiles"
                     label="Cantidad perfiles cuenta*"
                     type="number"
-                    name="account_profiles"
-                    autoComplete="account_profiles"
+                    name="profiles"
+                    autoComplete="profiles"
                   />
                 </Grid>
                 <Grid item xs={12}>
@@ -400,8 +431,8 @@ const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
               />
             </Grid>
           </Grid>
-          <Button type="submit" color="success" fullWidth variant="outlined" sx={{ mt: 3, mb: 2 }}>
-            Registrar
+          <Button disabled={loadingSubmit} type="submit" color="success" fullWidth variant="outlined" sx={{ mt: 3, mb: 2 }}>
+            {loadingSubmit ? <CircularProgress size={24} /> : 'Registrar'}
           </Button>
           <Button onClick={handleCloseForm} color="error" fullWidth variant="outlined">
             Cancelar

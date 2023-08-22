@@ -120,7 +120,6 @@ const Login: FC = () => {
   };
   const handleSuccesGoogle = (credentialResponse: CredentialResponse) => {
     const token: GoogleAuthData = jwt_decode(credentialResponse.credential ?? '');
-    console.log('token:', token);
     fetch(`${NEXT_PUBLIC_BACKEND_URL}users/signin`, {
       method: 'POST',
       headers: {

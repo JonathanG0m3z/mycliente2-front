@@ -122,44 +122,18 @@ const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
     getServices('services', 'GET');
   };
   React.useEffect(() => {
-    if (errorClient !== null) {
+    if (errorClient !== null || errorAccount !== null || errorService !== null) {
       Swal.fire({
         title: 'Algo salió mal',
         icon: 'error',
         confirmButtonText: 'Aceptar',
-        text: errorClient.message,
+        text: errorClient?.message || errorAccount?.message || errorService?.message,
         customClass: {
           container: 'zindex-sweetalert',
         },
       });
     }
-  }, [errorClient]);
-  React.useEffect(() => {
-    if (errorAccount !== null) {
-      Swal.fire({
-        title: 'Algo salió mal',
-        icon: 'error',
-        confirmButtonText: 'Aceptar',
-        text: errorAccount.message,
-        customClass: {
-          container: 'zindex-sweetalert',
-        },
-      });
-    }
-  }, [errorAccount]);
-  React.useEffect(() => {
-    if (errorService !== null) {
-      Swal.fire({
-        title: 'Algo salió mal',
-        icon: 'error',
-        confirmButtonText: 'Aceptar',
-        text: errorService.message,
-        customClass: {
-          container: 'zindex-sweetalert',
-        },
-      });
-    }
-  }, [errorService]);
+  }, [errorClient, errorAccount, errorService]);
   return (
     <Container component="main" maxWidth="xs">
       <CssBaseline />

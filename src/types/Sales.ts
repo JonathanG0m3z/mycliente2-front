@@ -17,5 +17,15 @@ export type Sale = {
   account: {
     email: string;
     password: string;
+    service: {
+      name: string;
+    };
   };
+};
+
+export type SaleTableResponse = {
+  sales: Sale[];
+  currentPage: string;
+  totalPages: number;
+  total: number;
 };

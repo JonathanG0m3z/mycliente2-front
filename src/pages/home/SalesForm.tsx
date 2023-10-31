@@ -34,6 +34,8 @@ import { useLazyFetch } from '@/utils/useFetch';
 
 interface SalesFormProps {
   handleCloseForm: () => void;
+  refreshTable: () => void;
+  onOpenDialog: () => void;
 }
 
 interface ClientsReponseType {
@@ -53,7 +55,7 @@ interface ServicesReponseType {
   name: string;
 }
 
-const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
+const SalesForm = ({ handleCloseForm, refreshTable, onOpenDialog }: SalesFormProps) => {
   const {
     register,
     handleSubmit,
@@ -85,14 +87,10 @@ const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
       password: encryptValue(data.password),
     })
       .then(() => {
-        Swal.fire({
-          title: 'Venta registrada con éxito',
-          icon: 'success',
-          confirmButtonText: 'Aceptar',
-          customClass: {
-            container: 'zindex-sweetalert',
-          },
-        }).then(() => reset());
+        onOpenDialog();
+        refreshTable();
+        handleCloseForm();
+        reset();
       })
       .catch((err) => {
         Swal.fire({
@@ -134,6 +132,7 @@ const SalesForm = ({ handleCloseForm }: SalesFormProps) => {
       });
     }
   }, [errorClient, errorAccount, errorService]);
+
   return (
     <Container component="main" maxWidth="xs">
       <CssBaseline />

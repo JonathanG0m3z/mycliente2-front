@@ -1,39 +1,106 @@
-interface Column {
-  id: string | string[];
-  label: string;
-  minWidth?: number;
-  align?: 'right';
-  // eslint-disable-next-line no-unused-vars
-  format?: (value: number) => string;
-}
+import { Sale } from '@/types/Sales';
+import { decryptValue } from '@/utils/cryptoHooks';
+import { MoreVert } from '@mui/icons-material';
+import { IconButton, Tooltip } from '@mui/material';
+import { ColumnsType } from 'antd/es/table';
+import moment from 'moment';
+import React from 'react';
 
-const SalesTableColumns: () => readonly Column[] = () => [
-  { id: ['client', 'name'], label: 'Nombre', minWidth: 170 },
-  { id: 'code', label: 'Días restantes', minWidth: 100 },
+interface SalesTableColumnsProps {
+  // eslint-disable-next-line no-unused-vars
+  openMenu: (event: React.MouseEvent<HTMLButtonElement>, record: Sale) => void;
+  isMenuOpen: boolean;
+}
+// eslint-disable-next-line no-unused-vars
+const SalesTableColumns: (props: SalesTableColumnsProps) => ColumnsType<Sale> = ({ openMenu, isMenuOpen }: SalesTableColumnsProps) => [
   {
-    id: 'expiration',
-    label: 'Fecha de vencimiento',
-    minWidth: 170,
-    align: 'right',
-    format: (value: number) => value.toLocaleString('en-US'),
+    title: 'Nombre',
+    dataIndex: ['client', 'name'],
+    key: 'client',
+    align: 'center',
   },
   {
-    id: 'size',
-    label: 'Servicio',
-    minWidth: 170,
-    align: 'right',
-    format: (value: number) => value.toLocaleString('en-US'),
+    title: 'Días restantes',
+    dataIndex: 'expiration',
+    key: 'expiration',
+    align: 'center',
+    render: (expiration: string) => {
+      const daysRemaining = moment(expiration).diff(moment(), 'days');
+      return daysRemaining;
+    },
   },
   {
-    id: ['account', 'email'],
-    label: 'Email cuenta',
-    minWidth: 170,
-    align: 'right',
-    format: (value: number) => value.toFixed(2),
+    title: 'Fecha de vencimiento',
+    dataIndex: 'expiration',
+    key: 'expiration',
+    align: 'center',
+    render: (expiration: string) => moment(expiration).format('DD/MM/YYYY'),
   },
-  { id: ['account', 'password'], label: 'Contraseña', minWidth: 170 },
-  { id: ['client', 'email'], label: 'Email cliente', minWidth: 170 },
-  { id: ['client', 'phone'], label: 'Teléfono cliente', minWidth: 170 },
+  {
+    title: 'Servicio',
+    dataIndex: ['account', 'service', 'name'],
+    key: 'service',
+    align: 'center',
+  },
+  {
+    title: 'Perfil',
+    dataIndex: 'profile',
+    key: 'profile',
+    align: 'center',
+  },
+  {
+    title: 'PIN',
+    dataIndex: 'pin',
+    key: 'pin',
+    align: 'center',
+  },
+  {
+    title: 'Email cuenta',
+    dataIndex: ['account', 'email'],
+    key: 'account',
+    align: 'center',
+  },
+  {
+    title: 'Contraseña',
+    dataIndex: ['account', 'password'],
+    key: 'account',
+    align: 'center',
+    render: (password: string) => decryptValue(password),
+  },
+  {
+    title: 'Email cliente',
+    dataIndex: ['client', 'email'],
+    key: 'client',
+    align: 'center',
+  },
+  {
+    title: 'Teléfono cliente',
+    dataIndex: ['client', 'phone'],
+    key: 'client',
+    align: 'center',
+  },
+  {
+    title: 'Acciones',
+    dataIndex: 'id',
+    key: 'record',
+    align: 'center',
+    render: (_, record: Sale) => (
+      <>
+        <Tooltip title="Opciones">
+          <IconButton
+            color="primary"
+            aria-label="Opciones"
+            aria-controls={isMenuOpen ? 'basic-menu' : undefined}
+            aria-haspopup="true"
+            aria-expanded={isMenuOpen ? 'true' : undefined}
+            onClick={(event) => openMenu(event, record)}
+          >
+            <MoreVert />
+          </IconButton>
+        </Tooltip>
+      </>
+    ),
+  },
 ];
 
 export default SalesTableColumns;

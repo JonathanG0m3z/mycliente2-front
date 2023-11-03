@@ -31,11 +31,13 @@ import { DatePicker } from '@mui/x-date-pickers';
 import moment from 'moment';
 import 'moment/locale/es';
 import { useLazyFetch } from '@/utils/useFetch';
+import { AddSaleResponse } from '@/types/Sales';
 
 interface SalesFormProps {
   handleCloseForm: () => void;
   refreshTable: () => void;
-  onOpenDialog: () => void;
+  // eslint-disable-next-line no-unused-vars
+  onOpenDialog: (res: AddSaleResponse) => void;
 }
 
 interface ClientsReponseType {
@@ -78,19 +80,21 @@ const SalesForm = ({ handleCloseForm, refreshTable, onOpenDialog }: SalesFormPro
     setSelectedCode(event.target.value as string);
   };
   const onSubmit = (data: any) => {
+    const pin = data.pin === '' ? null : data.pin;
+    const profile = data.profile === '' ? null : data.profile;
     createSale('sales', 'POST', {
       ...data,
       price: Number(data.price),
-      pin: data.pin === '' ? null : data.pin,
-      profile: data.profile === '' ? null : data.profile,
+      pin,
+      profile,
       phone: data.phone ? `${selectedCode.replace('+', '')}${data.phone}` : null,
       password: encryptValue(data.password),
     })
-      .then(() => {
-        onOpenDialog();
+      .then((res: AddSaleResponse) => {
         refreshTable();
         handleCloseForm();
         reset();
+        onOpenDialog(res);
       })
       .catch((err) => {
         Swal.fire({

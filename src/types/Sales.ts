@@ -11,7 +11,7 @@ export type Sale = {
   updatedAt: string;
   client: {
     name: string;
-    phone: string;
+    phone: string | null;
     email: string;
   };
   account: {
@@ -59,7 +59,7 @@ export type AddSaleResponse = {
   client: {
     id: string;
     name: string;
-    phone: string;
+    phone: string | null;
     email: string;
     userId: string;
   };

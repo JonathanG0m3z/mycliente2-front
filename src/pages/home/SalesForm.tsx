@@ -353,7 +353,7 @@ const SalesForm = ({ handleCloseForm, refreshTable, onOpenDialog }: SalesFormPro
                     onChange={(date) => field.onChange(date)}
                     label="Fecha de renovación cliente*"
                     format="LL"
-                    disablePast
+                    // disablePast
                     slotProps={{ textField: { fullWidth: true, helperText: `${errors.expiration?.message || ''}` } }}
                   />
                 )}

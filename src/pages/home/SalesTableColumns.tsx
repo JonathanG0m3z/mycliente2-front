@@ -1,16 +1,47 @@
 import { Sale } from '@/types/Sales';
 import { decryptValue } from '@/utils/cryptoHooks';
 import { MoreVert } from '@mui/icons-material';
-import { IconButton, Tooltip } from '@mui/material';
+import { Chip, IconButton, Tooltip } from '@mui/material';
 import { ColumnsType } from 'antd/es/table';
 import moment from 'moment';
 import React from 'react';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import Swal from 'sweetalert2';
+
+const ChipColors: any = {
+  '-3': 'error',
+  '-2': 'error',
+  '-1': 'error',
+  0: 'error',
+  1: 'error',
+  2: 'warning',
+  3: 'warning',
+  4: 'info',
+};
 
 interface SalesTableColumnsProps {
   // eslint-disable-next-line no-unused-vars
   openMenu: (event: React.MouseEvent<HTMLButtonElement>, record: Sale) => void;
   isMenuOpen: boolean;
 }
+
+const onClickSendReminder = (record: Sale) => {
+  if (!record.client.phone) {
+    Swal.fire({
+      title: 'No se puede enviar recordatorio',
+      text: 'El cliente no tiene un teléfono registrado',
+      icon: 'error',
+      confirmButtonText: 'Aceptar',
+    });
+    return;
+  }
+  const url = `https://api.whatsapp.com/send?phone=${record.client.phone}&text=Hola%20${record.client.name}%20👋%2C%0Apaso%20a%20recordarte%20que%20a%20tú%20servicio%20de%20${
+    record.account.service.name
+  }%20le%20quedan%20${moment(record.expiration).diff(moment(), 'days')}%20días%20para%20vencer.%20🗓${moment(record.expiration).format(
+    'DD/MM/YYYY'
+  )}.%20Queremos%20seguir%20brindandote%20el%20servicio%20así%20que%20cuentanos%2C%20¿te%20gustaría%20renovar%20u%20obtener%20una%20nueva%20cuenta%3F.%20😃`;
+  window.open(url, '_blank');
+};
 // eslint-disable-next-line no-unused-vars
 const SalesTableColumns: (props: SalesTableColumnsProps) => ColumnsType<Sale> = ({ openMenu, isMenuOpen }: SalesTableColumnsProps) => [
   {
@@ -24,9 +55,24 @@ const SalesTableColumns: (props: SalesTableColumnsProps) => ColumnsType<Sale> = 
     dataIndex: 'expiration',
     key: 'expiration',
     align: 'center',
-    render: (expiration: string) => {
+    render: (expiration: string, record) => {
       const daysRemaining = moment(expiration).diff(moment(), 'days');
-      return daysRemaining;
+      if (daysRemaining >= 5) return daysRemaining;
+      else
+        return (
+          <Chip
+            label={daysRemaining}
+            variant={daysRemaining >= 1 ? 'outlined' : 'filled'}
+            icon={
+              <Tooltip title="Envíar recordatorio Whatsapp">
+                <IconButton onClick={() => onClickSendReminder(record)}>
+                  <WhatsAppIcon />
+                </IconButton>
+              </Tooltip>
+            }
+            color={ChipColors[daysRemaining] ?? 'success'}
+          />
+        );
     },
   },
   {

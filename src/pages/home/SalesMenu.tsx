@@ -9,6 +9,9 @@ import { AddSaleResponse } from '@/types/Sales';
 import { decryptValue } from '@/utils/cryptoHooks';
 import moment from 'moment';
 import CheckIcon from '@mui/icons-material/Check';
+import { deleteSpaces } from '@/utils/deleteSpaces';
+
+const YOUTUBE_ACTIVATION = 'Activación youtube';
 
 interface DialogStateType {
   open: boolean;
@@ -28,10 +31,10 @@ const SalesMenu = ({ refreshTable }: SalesMenuProps) => {
   });
   const [copied, setCopied] = useState<boolean>(false);
   const onCloseDialog = () => {
-    setDialogState({
-      open: false,
-      res: null,
-    });
+    // setDialogState({
+    //   open: false,
+    //   res: null,
+    // });
   };
   // eslint-disable-next-line no-undef
   const onOpenDialog = (res: AddSaleResponse) => {
@@ -41,22 +44,31 @@ const SalesMenu = ({ refreshTable }: SalesMenuProps) => {
     });
   };
   const onCopy = () => {
-    navigator.clipboard.writeText(`
-Cliente: ${dialogState.res?.client.name}
-Cuenta: ${dialogState.res?.account.email}
-Contraseña: ${decryptValue(dialogState.res?.account.password ?? '')}
-${dialogState.res?.sale.pin ? 'Pin: ' + dialogState.res?.sale.pin : ''}
-${dialogState.res?.sale.profile ? 'Perfil: ' + dialogState.res?.sale.profile : ''}
-Precio: $${dialogState.res?.sale.price}
-Fecha renovación: ${moment(dialogState.res?.sale.expiration).format('LL')}
-`);
+    const text = `
+    Cliente: ${dialogState.res?.client.name}
+    ${
+      !dialogState.res?.account.service.name.includes(YOUTUBE_ACTIVATION)
+        ? `
+    Cuenta: ${dialogState.res?.account.email}
+    Contraseña: ${decryptValue(dialogState.res?.account.password ?? '')}`
+        : `Correo cliente: ${dialogState.res?.client.email}`
+    }
+    ${dialogState.res?.sale.pin ? 'Pin: ' + dialogState.res?.sale.pin : ''}
+    ${dialogState.res?.sale.profile ? 'Perfil: ' + dialogState.res?.sale.profile : ''}
+    Precio: $${dialogState.res?.sale.price}
+    Fecha renovación: ${moment(dialogState.res?.sale.expiration).format('LL')}
+    `;
+    const textWithoutSpaces = deleteSpaces(text);
+    navigator.clipboard.writeText(textWithoutSpaces);
     setCopied(true);
-    setTimeout(() => setCopied(false), 3000);
+    setTimeout(() => setCopied(false), 2500);
   };
   const sendByWhatsApp = () => {
-    const url = `https://api.whatsapp.com/send?phone=${dialogState.res?.client.phone}&text=😼Cliente%3A%20${dialogState.res?.client.name}%0A📝Cuenta%3A%20${
-      dialogState.res?.account.email
-    }%0A🔑Contraseña%3A%20${decryptValue(dialogState.res?.account.password ?? '')}%0A${dialogState.res?.sale.pin ? `*%EF%B8%8F⃣Pin%3A%20${dialogState.res?.sale.pin}%0A` : ''}${
+    const url = `https://api.whatsapp.com/send?phone=${dialogState.res?.client.phone}&text=😼Cliente%3A%20${dialogState.res?.client.name}%0A${
+      !dialogState.res?.account.service.name.includes(YOUTUBE_ACTIVATION)
+        ? `📝Cuenta%3A%20${dialogState.res?.account.email}%0A🔑Contraseña%3A%20${decryptValue(dialogState.res?.account.password ?? '')}%0A`
+        : ''
+    } ${dialogState.res?.sale.pin ? `*%EF%B8%8F⃣Pin%3A%20${dialogState.res?.sale.pin}%0A` : ''}${
       dialogState.res?.sale.profile ? `👤Perfil%3A%20${dialogState.res?.sale.profile}%0A` : ''
     }💵Precio%3A%20%24${dialogState.res?.sale.price}%0A🗓%EF%B8%8FFecha%20renovación%3A%20${moment(dialogState.res?.sale.expiration).format('LL')}`;
     // eslint-disable-next-line no-undef

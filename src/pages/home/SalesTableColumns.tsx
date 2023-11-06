@@ -8,6 +8,8 @@ import React from 'react';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import Swal from 'sweetalert2';
 
+const YOUTUBE_ACTIVATION = 'Activación youtube';
+
 const ChipColors: any = {
   '-3': 'error',
   '-2': 'error',
@@ -39,11 +41,18 @@ const onClickSendReminder = (record: Sale) => {
   if (moment(record.expiration).diff(moment(), 'days') >= 0) {
     url = `https://api.whatsapp.com/send?phone=${record.client.phone}&text=Hola%20${record.client.name}%20👋%2C%0Apaso%20a%20recordarte%20que%20a%20tú%20servicio%20de%20${
       record.account.service.name
-    }%20cuenta:%20${record.account.email}%20le%20quedan%20${moment(record.expiration).diff(moment(), 'days')}%20días%20para%20vencer.%20🗓${moment(record.expiration).format(
+    }%20con%20${!record.account.service.name.includes(YOUTUBE_ACTIVATION) ? `cuenta:%20${record.account.email}` : `correo:%20${record.client.email}`} %20le%20quedan%20${moment(record.expiration).diff(
+      moment(),
+      'days'
+    )}%20días%20para%20vencer.%20🗓${moment(record.expiration).format(
       'DD/MM/YYYY'
     )}.%20Queremos%20seguir%20brindandote%20el%20servicio%20así%20que%20cuentanos%2C%20¿te%20gustaría%20renovar%20u%20obtener%20una%20nueva%20cuenta%3F.%20😃`;
   } else {
-    url = `https://api.whatsapp.com/send?phone=${record.client.phone}&text=🚨SUSCRIPCIÓN%20VENCIDA%20🚨%0AHola%20${record.client.name}%20👋%2C%0Apaso%20a%20recordarte%20que%20a%20tú%20servicio%20de%20Netflix%20cuenta:%20${record.account.email}venció%20el%20pasado%2006%2F11%2F2023%20.%20Queremos%20seguir%20brindandote%20el%20servicio%20así%20que%20cuentanos%2C%20¿te%20gustaría%20renovar%20u%20obtener%20una%20nueva%20cuenta%3F.%20😃`;
+    url = `https://api.whatsapp.com/send?phone=${record.client.phone}&text=🚨SUSCRIPCIÓN%20VENCIDA%20🚨%0AHola%20${
+      record.client.name
+    }%20👋%2C%0Apaso%20a%20recordarte%20que%20a%20tú%20servicio%20de%20Netflix%20con%20${
+      !record.account.service.name.includes(YOUTUBE_ACTIVATION) ? `cuenta:%20${record.account.email}` : `correo:%20${record.client.email}`
+    }%20venció%20el%20pasado%2006%2F11%2F2023%20.%20Queremos%20seguir%20brindandote%20el%20servicio%20así%20que%20cuentanos%2C%20¿te%20gustaría%20renovar%20u%20obtener%20una%20nueva%20cuenta%3F.%20😃`;
   }
   window.open(url, '_blank');
 };

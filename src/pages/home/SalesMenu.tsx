@@ -31,10 +31,10 @@ const SalesMenu = ({ refreshTable }: SalesMenuProps) => {
   });
   const [copied, setCopied] = useState<boolean>(false);
   const onCloseDialog = () => {
-    // setDialogState({
-    //   open: false,
-    //   res: null,
-    // });
+    setDialogState({
+      open: false,
+      res: null,
+    });
   };
   // eslint-disable-next-line no-undef
   const onOpenDialog = (res: AddSaleResponse) => {

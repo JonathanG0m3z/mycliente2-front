@@ -8,6 +8,7 @@ import Swal from 'sweetalert2';
 import { Alert, AlertColor, Grid, IconButton, Menu, MenuItem, Snackbar, Tooltip } from '@mui/material';
 import { Refresh } from '@mui/icons-material';
 import { Sale } from '@/types/Sales';
+import { useRouter } from 'next/router';
 
 interface AlertStateType {
   open: boolean;
@@ -26,6 +27,7 @@ export interface SalesTableRef {
 interface SalesTableProps {}
 
 const SalesTable = React.forwardRef<SalesTableRef, SalesTableProps>(function SalesTable(_props, ref) {
+  const router = useRouter();
   const [loadingTable, setLoadingTable] = React.useState<boolean>(false);
   const [filters, setFilters] = React.useState<SalesFilters>({
     page: 0,
@@ -159,6 +161,23 @@ const SalesTable = React.forwardRef<SalesTableRef, SalesTableProps>(function Sal
     }
   };
 
+  const onEditSale = () => {
+    onCloseMenu();
+    if (selectedSale !== null) {
+      router.push(`/sales/${selectedSale.id}`);
+    } else {
+      Swal.fire({
+        title: 'Algo salió mal',
+        icon: 'error',
+        confirmButtonText: 'Aceptar',
+        text: 'No se ha seleccionado ninguna venta',
+        customClass: {
+          container: 'zindex-sweetalert',
+        },
+      });
+    }
+  };
+
   React.useImperativeHandle(ref, () => ({
     refresh() {
       refreshTable();
@@ -186,6 +205,7 @@ const SalesTable = React.forwardRef<SalesTableRef, SalesTableProps>(function Sal
         anchorReference={contextMenu !== null ? 'anchorPosition' : undefined}
         anchorPosition={contextMenu !== null ? { top: contextMenu.mouseY, left: contextMenu.mouseX } : undefined}
       >
+        <MenuItem onClick={onEditSale}>Editar</MenuItem>
         <MenuItem onClick={onDeleteSale}>Eliminar</MenuItem>
       </Menu>
       <Grid container justifyContent="center" alignItems="center">

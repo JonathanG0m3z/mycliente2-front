@@ -1,9 +1,10 @@
 import { useAuthMiddleware } from '@/utils/authMiddleware';
 import dynamic from 'next/dynamic';
 import SalesTable, { SalesTableRef } from './SalesTable';
-import SalesMenu from './SalesMenu';
+import SalesMenu, { SalesMenuRef } from './SalesMenu';
 import { useRef } from 'react';
 import { Paper } from '@mui/material';
+import { Sale } from '@/types/Sales';
 
 // Importa el componente que deseas renderizar solo en el lado del cliente
 const Navbar = dynamic(() => import('../../components/Navbar'), {
@@ -12,16 +13,20 @@ const Navbar = dynamic(() => import('../../components/Navbar'), {
 
 const Home = () => {
   useAuthMiddleware();
-  const saleTableRef = useRef<SalesTableRef>(null);
+  const salesTableRef = useRef<SalesTableRef>(null);
+  const salesMenuRef = useRef<SalesMenuRef>(null);
   const refreshTable = () => {
-    saleTableRef.current?.refresh();
+    salesTableRef.current?.refresh();
+  };
+  const onEditSale = (record: Sale) => {
+    salesMenuRef.current?.onEditSale(record);
   };
   return (
     <>
       <Paper sx={{ width: '100%', overflow: 'hidden', height: '100vh' }}>
         <Navbar />
-        <SalesMenu refreshTable={refreshTable} />
-        <SalesTable ref={saleTableRef} />
+        <SalesMenu refreshTable={refreshTable} ref={salesMenuRef} />
+        <SalesTable ref={salesTableRef} onEdit={onEditSale} />
       </Paper>
     </>
   );

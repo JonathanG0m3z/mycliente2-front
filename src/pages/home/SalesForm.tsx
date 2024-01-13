@@ -23,7 +23,7 @@ import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import Swal from 'sweetalert2';
-import { encryptValue } from '@/utils/cryptoHooks';
+import { decryptValue, encryptValue } from '@/utils/cryptoHooks';
 import dialCodes from '@/utils/dialCodes';
 import { green } from '@mui/material/colors';
 import QueryAutocomplete, { AutocompleteOptionType } from '@/components/QueryAutocomplete';
@@ -31,33 +31,20 @@ import { DatePicker } from '@mui/x-date-pickers';
 import moment from 'moment';
 import 'moment/locale/es';
 import { useLazyFetch } from '@/utils/useFetch';
-import { AddSaleResponse } from '@/types/Sales';
+import { AddSaleResponse, Sale } from '@/types/Sales';
+import { ClientsComboboxType } from '@/types/Clients';
+import { AccountsComboboxType } from '@/types/Accounts';
+import { ServicesComboboxType } from '@/types/Services';
 
 interface SalesFormProps {
   handleCloseForm: () => void;
   refreshTable: () => void;
   // eslint-disable-next-line no-unused-vars
   onOpenDialog: (res: AddSaleResponse) => void;
+  record: Sale | null;
 }
 
-interface ClientsReponseType {
-  name: string | null;
-  phone?: string | null;
-  id?: string | null;
-  inputValue?: string;
-}
-
-interface AccountsReponseType {
-  id?: string | null;
-  email: string | null;
-  inputValue?: string;
-}
-interface ServicesReponseType {
-  id: string;
-  name: string;
-}
-
-const SalesForm = ({ handleCloseForm, refreshTable, onOpenDialog }: SalesFormProps) => {
+const SalesForm = ({ handleCloseForm, refreshTable, onOpenDialog, record }: SalesFormProps) => {
   const {
     register,
     handleSubmit,
@@ -65,13 +52,29 @@ const SalesForm = ({ handleCloseForm, refreshTable, onOpenDialog }: SalesFormPro
     control,
     setValue,
     reset,
-  } = useForm();
+  } = useForm({
+    defaultValues: {
+      client: { label: record?.client.name ?? null, id: record?.clientId ?? null },
+      account: { label: record?.account.email ?? null, id: String(record?.accountId) ?? null },
+      service: { label: '', id: '' },
+      phone: null,
+      email: null,
+      password: decryptValue(record?.account.password ?? ''),
+      expiration: moment(record?.expiration),
+      profile: record?.profile,
+      pin: record?.pin,
+      price: record?.price,
+      accountExpiration: moment().add(1, 'month'),
+      renewDate: record ? null : moment().add(1, 'month'),
+      profiles: null,
+    },
+  });
   const [selectedCode, setSelectedCode] = useState<string>(dialCodes[0].code);
   /***************CLIENT SELECT STATES */
-  const [clientSelected, setClientSelected] = useState<AutocompleteOptionType | null>(null);
+  const [clientSelected, setClientSelected] = useState<AutocompleteOptionType | null>(record ? { label: record?.client.name ?? null, id: record?.clientId ?? null } : null);
   const [isNewClient, setIsNewClient] = useState<boolean>(false);
   /**************ACCOUNT SELECT STATATES */
-  const [accountSelected, setAccountSelected] = useState<AutocompleteOptionType | null>(null);
+  const [accountSelected, setAccountSelected] = useState<AutocompleteOptionType | null>(record ? { label: record.account.email ?? null, id: String(record.accountId) ?? null } : null);
   const [isNewAccount, setIsNewAccount] = useState<boolean>(false);
 
   const filter = createFilterOptions<AutocompleteOptionType>();
@@ -152,7 +155,7 @@ const SalesForm = ({ handleCloseForm, refreshTable, onOpenDialog }: SalesFormPro
           <AttachMoneyOutlinedIcon />
         </Avatar>
         <Typography component="h1" variant="h5">
-          Registrar nueva venta
+          {record ? 'Editar' : 'Registrar'} venta
         </Typography>
         <Box component="form" sx={{ mt: 3 }} onSubmit={handleSubmit(onSubmit)}>
           <Grid container spacing={2}>
@@ -167,7 +170,7 @@ const SalesForm = ({ handleCloseForm, refreshTable, onOpenDialog }: SalesFormPro
                     onChangeControl={(value) => field.onChange(value)}
                     optionSelected={clientSelected}
                     setOptionSelected={setClientSelected}
-                    options={dataClients?.clients.map((client: ClientsReponseType) => {
+                    options={dataClients?.clients.map((client: ClientsComboboxType) => {
                       return {
                         label: client.name,
                         id: client.id,
@@ -240,7 +243,7 @@ const SalesForm = ({ handleCloseForm, refreshTable, onOpenDialog }: SalesFormPro
                     onChangeControl={(value) => field.onChange(value)}
                     optionSelected={accountSelected}
                     setOptionSelected={setAccountSelected}
-                    options={dataAccounts?.accounts?.map((account: AccountsReponseType) => {
+                    options={dataAccounts?.accounts?.map((account: AccountsComboboxType) => {
                       return {
                         label: account.email,
                         id: account.id,
@@ -267,7 +270,7 @@ const SalesForm = ({ handleCloseForm, refreshTable, onOpenDialog }: SalesFormPro
                         filterOptions={(options, params) => filter(options, params)}
                         onChange={(event, value) => field.onChange(value)}
                         options={
-                          dataServices?.services?.map((service: ServicesReponseType) => {
+                          dataServices?.services?.map((service: ServicesComboboxType) => {
                             return {
                               label: service.name,
                               id: service.id,
@@ -317,7 +320,6 @@ const SalesForm = ({ handleCloseForm, refreshTable, onOpenDialog }: SalesFormPro
                     name="accountExpiration"
                     control={control}
                     rules={{ required: 'Este campo es requerido' }}
-                    defaultValue={moment().add(1, 'month')}
                     render={({ field }) => (
                       <DatePicker
                         {...field}
@@ -409,7 +411,7 @@ const SalesForm = ({ handleCloseForm, refreshTable, onOpenDialog }: SalesFormPro
             </Grid>
           </Grid>
           <Button disabled={loadingSubmit} type="submit" color="success" fullWidth variant="outlined" sx={{ mt: 3, mb: 2 }}>
-            {loadingSubmit ? <CircularProgress size={24} /> : 'Registrar'}
+            {loadingSubmit ? <CircularProgress size={24} /> : 'Guardar'}
           </Button>
           <Button onClick={handleCloseForm} color="error" fullWidth variant="outlined">
             Cancelar

@@ -8,7 +8,6 @@ import Swal from 'sweetalert2';
 import { Alert, AlertColor, Grid, IconButton, Menu, MenuItem, Snackbar, Tooltip } from '@mui/material';
 import { Refresh } from '@mui/icons-material';
 import { Sale } from '@/types/Sales';
-import { useRouter } from 'next/router';
 
 interface AlertStateType {
   open: boolean;
@@ -24,10 +23,12 @@ export interface SalesTableRef {
   refresh: () => void;
 }
 
-interface SalesTableProps {}
+interface SalesTableProps {
+  // eslint-disable-next-line no-unused-vars
+  onEdit: (record: Sale) => void;
+}
 
-const SalesTable = React.forwardRef<SalesTableRef, SalesTableProps>(function SalesTable(_props, ref) {
-  const router = useRouter();
+const SalesTable = React.forwardRef<SalesTableRef, SalesTableProps>(function SalesTable({ onEdit }, ref) {
   const [loadingTable, setLoadingTable] = React.useState<boolean>(false);
   const [filters, setFilters] = React.useState<SalesFilters>({
     page: 0,
@@ -164,7 +165,7 @@ const SalesTable = React.forwardRef<SalesTableRef, SalesTableProps>(function Sal
   const onEditSale = () => {
     onCloseMenu();
     if (selectedSale !== null) {
-      router.push(`/sales/${selectedSale.id}`);
+      onEdit(selectedSale);
     } else {
       Swal.fire({
         title: 'Algo salió mal',
